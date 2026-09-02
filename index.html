@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--p:#f07e13;--in:#26262b;--t:#f3f4f6;--m:#9ca3af;--b:#2e2e38;--r:#ef4444;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:transparent;color:var(--t);font-family:sans-serif;font-size:13px;line-height:1.5;}
+.wrap{width:100%;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px;backdrop-filter:blur(8px);}
+.banner{border-left:4px solid var(--p);padding:8px 12px;margin-bottom:14px;background:rgba(240,126,19,0.06);border-radius:0 6px 6px 0;}
+.banner p{color:var(--m);font-size:11px;font-style:italic;}
+.st{font-size:11px;font-weight:600;color:#10b981;background:rgba(16,185,129,0.12);padding:6px 10px;border-radius:6px;margin-bottom:14px;}
+.sec{font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;margin:16px 0 10px;letter-spacing:.6px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:4px;}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.g{grid-template-columns:1fr;}}
+.f{display:flex;flex-direction:column;margin-bottom:10px;}
+.f label{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--m);margin-bottom:4px;}
+.f input{background:var(--in);border:1px solid var(--b);border-radius:6px;color:var(--t);padding:9px 11px;font-size:13px;outline:none;}
+.vt{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.vt input{display:none;}
+.vt label{background:var(--in);border:1px solid var(--b);border-radius:6px;padding:7px 12px;font-size:11px;cursor:pointer;color:var(--m);}
+.vt input:checked+label{background:rgba(240,126,19,0.15);border-color:var(--p);color:var(--p);font-weight:700;}
+.pc{background:var(--in);border:1px solid var(--b);border-radius:8px;padding:11px;cursor:pointer;display:flex;gap:10px;margin-bottom:8px;transition:.15s;}
+.pc:hover{border-color:rgba(240,126,19,.4);}
+.pc.on{border-color:var(--p);background:rgba(240,126,19,.05);}
+.pc input[type=radio]{width:14px;height:14px;margin-top:2px;accent-color:var(--p);flex-shrink:0;}
+.pi{flex:1;}
+.ph{display:flex;justify-content:space-between;font-weight:700;font-size:12px;gap:6px;}
+.pp{color:var(--p);}
+.pd{font-size:10px;color:var(--m);margin-top:3px;}
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:480px){.ag{grid-template-columns:1fr;}}
+.ac{background:var(--in);border:1px solid var(--b);border-radius:6px;padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:.15s;}
+.ac:hover{border-color:rgba(255,255,255,.15);}
+.ac.on{border-color:var(--p);background:rgba(240,126,19,.05);}
+.ac input[type=checkbox]{accent-color:var(--p);width:14px;height:14px;flex-shrink:0;}
+.al{flex:1;}
+.an{font-size:11px;font-weight:600;}
+.am{font-size:9px;color:var(--m);}
+.apr{color:var(--p);font-weight:700;font-size:10px;white-space:nowrap;}
+.sl{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:10px;}
+.sb{background:var(--in);border:1px solid var(--b);border-radius:6px;padding:10px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:.15s;}
+.sb:hover:not(.dis){border-color:var(--p);color:var(--p);}
+.sb.on{background:var(--p);color:#fff;border-color:var(--p);font-weight:800;}
+.sb.dis{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:var(--r);cursor:not-allowed;text-decoration:line-through;opacity:.65;}
+.tot{background:rgba(240,126,19,.07);border:1px solid var(--p);border-radius:8px;padding:12px;margin-top:16px;text-align:center;}
+.tv{font-size:24px;color:var(--p);font-weight:800;}
+.di{font-size:11px;color:var(--m);margin-top:4px;}
+.btn{width:100%;border:none;border-radius:6px;padding:13px;font-size:14px;font-weight:800;text-transform:uppercase;cursor:pointer;color:#fff;background:var(--p);margin-top:14px;letter-spacing:.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.cal-btn{display:inline-block;background:#4285f4;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:12px;font-weight:700;margin-top:12px;}
+#ok{display:none;text-align:center;padding:24px 12px;}
+#ok h3{color:var(--p);font-size:16px;font-weight:800;text-transform:uppercase;margin-bottom:8px;}
+.code{color:var(--p);font-size:18px;font-weight:800;border:2px dashed var(--p);padding:6px 14px;display:inline-block;margin:10px 0;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner"><p>📋 Select your service & live time slot. Bookings block schedule automatically!</p></div>
+  <div class="st" id="sbBar">🟢 Live Schedule Connected</div>
+  <div id="frm">
+    <div class="sec">👤 Customer Info</div>
+    <div class="g">
+      <div class="f"><label>First Name *</label><input id="fn" placeholder="John" required></div>
+      <div class="f"><label>Last Name *</label><input id="ln" placeholder="Doe" required></div>
+      <div class="f"><label>Phone *</label><input id="ph" type="tel" placeholder="(000) 000-0000" required></div>
+      <div class="f"><label>Email *</label><input id="em" type="email" placeholder="email@example.com" required></div>
+    </div>
+
+    <div class="sec">🚗 Vehicle Info</div>
+    <div class="f"><label>Vehicle Type *</label>
+      <div class="vt">
+        <input type="radio" id="v1" name="vt" value="Sedan" checked><label for="v1">Sedan</label>
+        <input type="radio" id="v2" name="vt" value="Coupe"><label for="v2">Coupe</label>
+        <input type="radio" id="v3" name="vt" value="SUV"><label for="v3">SUV</label>
+        <input type="radio" id="v4" name="vt" value="Pickup"><label for="v4">Pickup</label>
+        <input type="radio" id="v5" name="vt" value="Other"><label for="v5">Other</label>
+      </div>
+    </div>
+    <div class="g">
+      <div class="f"><label>Make *</label><input id="mk" placeholder="Toyota" required></div>
+      <div class="f"><label>Model *</label><input id="mo" placeholder="Camry" required></div>
+      <div class="f"><label>License Plate *</label><input id="lp" placeholder="ABC-1234" required></div>
+    </div>
+
+    <div class="sec">🛠️ Select Package</div>
+    <div id="pkgs">
+      <div class="pc on" data-mn="40" data-mx="40" data-dur="45">
+        <input type="radio" name="pkg" value="Staff Car Wash ($40)" checked>
+        <div class="pi"><div class="ph"><span>Staff Car Wash</span><span class="pp">$40</span></div><div class="pd">Foam Wash · Wipe Down · Jams · Windows · Wheels · Tire Shine (45 min)</div></div>
+      </div>
+      <div class="pc" data-mn="60" data-mx="80" data-dur="60">
+        <input type="radio" name="pkg" value="Int/Ext Maintenance ($60-$80)">
+        <div class="pi"><div class="ph"><span>Int & Ext Maintenance</span><span class="pp">$60-$80</span></div><div class="pd">Vacuum · Wipe · Disinfect · Foam Wash · Deep Wheels (1 hr)</div></div>
+      </div>
+      <div class="pc" data-mn="150" data-mx="200" data-dur="120">
+        <input type="radio" name="pkg" value="Mini Full Int/Ext ($150-$200)">
+        <div class="pi"><div class="ph"><span>Mini Full Int & Ext</span><span class="pp">$150-$200</span></div><div class="pd">Steam Clean · Iron Removal · Spray Sealant · Full Wash (2 hrs)</div></div>
+      </div>
+      <div class="pc" data-mn="180" data-mx="240" data-dur="120">
+        <input type="radio" name="pkg" value="Interior Refresh ($180-$240)">
+        <div class="pi"><div class="ph"><span>Interior Refresh</span><span class="pp">$180-$240</span></div><div class="pd">Seats & Carpet Shampooed · Leather Clean · Steam (2 hrs)</div></div>
+      </div>
+      <div class="pc" data-mn="200" data-mx="300" data-dur="120">
+        <input type="radio" name="pkg" value="Exterior Restoration ($200-$300)">
+        <div class="pi"><div class="ph"><span>Exterior Restoration</span><span class="pp">$200-$300</span></div><div class="pd">Clay Bar · Paint Correction · Iron · Deep Wheels (2 hrs)</div></div>
+      </div>
+      <div class="pc" data-mn="400" data-mx="500" data-dur="360">
+        <input type="radio" name="pkg" value="Luxury Restoration ($400-$500)">
+        <div class="pi"><div class="ph"><span>Luxury Restoration</span><span class="pp">$400-$500</span></div><div class="pd">Full Correction · 4-6mo Sealant · Engine · Shampoo (6 hrs)</div></div>
+      </div>
+    </div>
+
+    <div class="sec">➕ Add-ons</div>
+    <div class="ag">
+      <div class="ac" data-id="a1"><input type="checkbox" id="a1" data-n="40" data-x="60" data-dur="0" value="Ceramic Sealant ($40-$60)"><div class="al"><div class="an">Ceramic Sealant</div><div class="am">4-6 Months</div></div><div class="apr">$40-$60</div></div>
+      <div class="ac" data-id="a2"><input type="checkbox" id="a2" data-n="800" data-x="1000" data-dur="240" value="Ceramic Coating ($800-$1000)"><div class="al"><div class="an">Ceramic Coating</div><div class="am">+4 Hours</div></div><div class="apr">$800-$1K</div></div>
+      <div class="ac" data-id="a3"><input type="checkbox" id="a3" data-n="30" data-x="30" data-dur="0" value="Wax Application ($30)"><div class="al"><div class="an">Wax Application</div><div class="am">1-2 Months</div></div><div class="apr">$30</div></div>
+      <div class="ac" data-id="a4"><input type="checkbox" id="a4" data-n="40" data-x="50" data-dur="30" value="Pet Hair Removal ($40-$50)"><div class="al"><div class="an">Pet Hair</div><div class="am">+30 Min</div></div><div class="apr">$40-$50</div></div>
+      <div class="ac" data-id="a5"><input type="checkbox" id="a5" data-n="40" data-x="40" data-dur="30" value="Engine Bay ($40)"><div class="al"><div class="an">Engine Bay</div><div class="am">+30 Min</div></div><div class="apr">$40</div></div>
+      <div class="ac" data-id="a6"><input type="checkbox" id="a6" data-n="60" data-x="80" data-dur="30" value="Headlight Restore ($60-$80)"><div class="al"><div class="an">Headlights</div><div class="am">+30 Min</div></div><div class="apr">$60-$80</div></div>
+    </div>
+
+    <div class="sec">📅 Select Date & Live Time Slot</div>
+    <div class="f"><label>Date *</label><input id="da" type="date" required></div>
+    <div class="f">
+      <label>Available Time Slots (Green = Open · Red/Strikethrough = Booked) *</label>
+      <div class="sl" id="sc"><div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date above</div></div>
+    </div>
+    <div class="tot">
+      <div style="font-size:9px;color:var(--m);">ESTIMATED TOTAL & SERVICE BLOCK</div>
+      <div class="tv" id="tot">$40</div>
+      <div class="di" id="di">Estimated Service Time: 45 min (+ 30 min buffer)</div>
+    </div>
+    <button class="btn" id="sb">🚗 Confirm Detailing Booking</button>
+  </div>
+
+  <div id="ok">
+    <div style="font-size:48px;margin-bottom:10px;">✅</div>
+    <h3>Booking Requested!</h3>
+    <p style="font-size:11px;color:var(--m);margin-bottom:4px;">Your service code:</p>
+    <div class="code" id="cd">PAD-000000</div>
+    <p style="font-size:11px;color:var(--m);margin-top:4px;" id="od">Time slot reserved. Confirmation sent to Miguel!</p>
+    <div><a id="calLink" href="#" target="_blank" class="cal-btn">📅 Add to Google Calendar</a></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDofl3f-gNv60UfFUp1IwjhV7sLlANbQbU",
+  authDomain: "miguel-pad-la.firebaseapp.com",
+  projectId: "miguel-pad-la",
+  storageBucket: "miguel-pad-la.firebasestorage.app",
+  messagingSenderId: "269778227029",
+  appId: "1:269778227029:web:53ca26e98cd9fd0b2469dc"
+};
+
+let db = null;
+let unsubscribe = null;
+let allBookings = [];
+
+function initFirebase() {
+  if (db) return db;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } catch(e) { console.error("Firebase init error:", e); }
+  return db;
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let pMin = 40, pMax = 40, pBaseDur = 45;
+let selSlot = null;
+const WS = 540, WE = 1080, BUF = 30; // 9AM to 6PM, 30min buffer
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Set min date to today
+  document.getElementById('da').min = new Date().toISOString().split('T')[0];
+
+  // Package click listeners
+  document.querySelectorAll('.pc').forEach(function(card) {
+    card.addEventListener('click', function() {
+      selectPackage(card);
+    });
+  });
+
+  // Add-on click listeners
+  document.querySelectorAll('.ac').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      const id = card.getAttribute('data-id');
+      const cb = document.getElementById(id);
+      if (e.target !== cb) cb.checked = !cb.checked;
+      card.classList.toggle('on', cb.checked);
+      recalc();
+    });
+  });
+
+  // Date change listener
+  document.getElementById('da').addEventListener('change', function() {
+    subscribeToDate();
+  });
+
+  // Submit button
+  document.getElementById('sb').addEventListener('click', submitBooking);
+
+  // Run initial calc
+  recalc();
+});
+
+// ============================================================
+// PACKAGE SELECTION
+// ============================================================
+function selectPackage(card) {
+  document.querySelectorAll('.pc').forEach(function(c) {
+    c.classList.remove('on');
+    c.querySelector('input[type=radio]').checked = false;
+  });
+  card.classList.add('on');
+  card.querySelector('input[type=radio]').checked = true;
+  pMin = parseInt(card.getAttribute('data-mn'));
+  pMax = parseInt(card.getAttribute('data-mx'));
+  pBaseDur = parseInt(card.getAttribute('data-dur'));
+  recalc();
+}
+
+// ============================================================
+// DURATION CALCULATION
+// ============================================================
+function getTotalDuration() {
+  let dur = pBaseDur;
+  document.querySelectorAll('.ag input[type=checkbox]:checked').forEach(function(cb) {
+    dur += parseInt(cb.getAttribute('data-dur')) || 0;
+  });
+  return dur;
+}
+
+// ============================================================
+// PRICE + TIME DISPLAY
+// ============================================================
+function recalc() {
+  let mn = pMin, mx = pMax;
+  document.querySelectorAll('.ag input[type=checkbox]:checked').forEach(function(cb) {
+    mn += parseInt(cb.getAttribute('data-n')) || 0;
+    mx += parseInt(cb.getAttribute('data-x')) || 0;
+  });
+  document.getElementById('tot').innerText = (mn === mx) ? '$' + mn : '$' + mn + ' - $' + mx;
+
+  let td = getTotalDuration();
+  let h = Math.floor(td / 60), m = td % 60, t = '';
+  if (h > 0) t += h + ' hr ';
+  if (m > 0) t += m + ' min';
+  document.getElementById('di').innerText = 'Estimated Service Time: ' + t + ' (+ 30 min buffer)';
+
+  // Only re-render slots if date is selected
+  if (document.getElementById('da').value) renderSlots();
+}
+
+// ============================================================
+// TIME HELPERS
+// ============================================================
+function toTime12(mins) {
+  let h = Math.floor(mins / 60), m = mins % 60, ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ap;
+}
+
+function normalizeDate(raw) {
+  if (!raw) return '';
+  let p = raw.split('-');
+  if (p.length === 3 && p[0].length === 4) return raw;
+  let d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ============================================================
+// FIREBASE REAL-TIME LISTENER
+// ============================================================
+function subscribeToDate() {
+  let dt = normalizeDate(document.getElementById('da').value);
+  if (!dt) return;
+
+  let firestore = initFirebase();
+  if (!firestore) {
+    allBookings = JSON.parse(localStorage.getItem('pb_all') || '[]');
+    renderSlots();
+    return;
+  }
+
+  if (unsubscribe) unsubscribe();
+  document.getElementById('sbBar').innerText = '🔄 Loading availability...';
+
+  unsubscribe = firestore.collection('bookings').onSnapshot(function(snap) {
+    allBookings = [];
+    snap.forEach(function(doc) { allBookings.push(doc.data()); });
+    let count = allBookings.filter(function(b) { return normalizeDate(b.date) === dt; }).length;
+    document.getElementById('sbBar').innerText = '🟢 Live Connected | ' + count + ' booking(s) on ' + dt;
+    renderSlots();
+  }, function(err) {
+    document.getElementById('sbBar').innerText = '⚠️ Offline Mode';
+    console.error('Firestore error:', err);
+  });
+}
+
+// ============================================================
+// RENDER TIME SLOTS
+// ============================================================
+function renderSlots() {
+  let dt = normalizeDate(document.getElementById('da').value);
+  let container = document.getElementById('sc');
+  if (!dt) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date above</div>';
+    return;
+  }
+  let dayBookings = allBookings.filter(function(b) { return normalizeDate(b.date) === dt; });
+  let need = getTotalDuration() + BUF;
+
+  container.innerHTML = '';
+  selSlot = null;
+
+  for (let m = WS; m <= WE - 30; m += 30) {
+    let s = m, e = m + need;
+    let blk = (e > WE + BUF);
+
+    for (let i = 0; i < dayBookings.length; i++) {
+      let b = dayBookings[i];
+      let bStart = Number(b.startMins);
+      let bEnd = bStart + Number(b.totalMins);
+      if (s < bEnd && e > bStart) { blk = true; break; }
+    }
+
+    let btn = document.createElement('div');
+    btn.className = 'sb' + (blk ? ' dis' : '');
+    btn.innerText = toTime12(m);
+
+    if (!blk) {
+      (function(slotStart, slotLabel) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.sb').forEach(function(b) { b.classList.remove('on'); });
+          btn.classList.add('on');
+          selSlot = { mins: slotStart, label: slotLabel };
+        });
+      })(s, toTime12(s));
+    }
+    container.appendChild(btn);
+  }
+}
+
+// ============================================================
+// SUBMIT BOOKING
+// ============================================================
+async function submitBooking() {
+  let fn = document.getElementById('fn').value.trim();
+  let ln = document.getElementById('ln').value.trim();
+  let ph = document.getElementById('ph').value.trim();
+  let em = document.getElementById('em').value.trim();
+  let mk = document.getElementById('mk').value.trim();
+  let mo = document.getElementById('mo').value.trim();
+  let lp = document.getElementById('lp').value.trim();
+  let da = normalizeDate(document.getElementById('da').value);
+
+  if (!fn || !ln || !ph || !em || !mk || !mo || !lp || !da) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+  if (!selSlot) {
+    alert('Please select an available time slot.');
+    return;
+  }
+
+  let vt = document.querySelector('input[name="vt"]:checked').value;
+  let pk = document.querySelector('input[name="pkg"]:checked').value;
+  let ads = Array.from(document.querySelectorAll('.ag input[type=checkbox]:checked')).map(function(e) { return e.value; }).join(', ') || 'None';
+  let tot = document.getElementById('tot').innerText;
+  let code = 'PAD-' + Math.floor(100000 + Math.random() * 900000);
+  let need = getTotalDuration() + BUF;
+
+  let sbtn = document.getElementById('sb');
+  sbtn.disabled = true;
+  sbtn.innerText = 'Reserving...';
+
+  let data = {
+    bookingId: code, date: da, timeSlot: selSlot.label,
+    startMins: selSlot.mins, totalMins: need,
+    name: fn + ' ' + ln, phone: ph, email: em,
+    vehicle: mk + ' ' + mo + ' (' + vt + ')', plate: lp,
+    package: pk, addons: ads, totalPrice: tot,
+    createdAt: new Date().toISOString()
+  };
+
+  // Save to Firebase
+  let firestore = initFirebase();
+  if (firestore) {
+    try { await firestore.collection('bookings').doc(code).set(data); }
+    catch(e) { console.error('Firestore save error:', e); }
+  } else {
+    allBookings.push(data);
+    localStorage.setItem('pb_all', JSON.stringify(allBookings));
+  }
+
+  // Build Google Calendar link
+  let gS = da.replace(/-/g, '') + 'T' + String(Math.floor(selSlot.mins / 60)).padStart(2, '0') + String(selSlot.mins % 60).padStart(2, '0') + '00';
+  let endM = selSlot.mins + need;
+  let gE = da.replace(/-/g, '') + 'T' + String(Math.floor(endM / 60)).padStart(2, '0') + String(endM % 60).padStart(2, '0') + '00';
+  let gTitle = encodeURIComponent('Detailing Booking: ' + code + ' - ' + fn + ' ' + ln);
+  let gDet = encodeURIComponent('Code: ' + code + '\nPhone: ' + ph + '\nVehicle: ' + mk + ' ' + mo + ' (' + vt + ')\nPlate: ' + lp + '\nPackage: ' + pk + '\nAddons: ' + ads + '\nTotal: ' + tot);
+  document.getElementById('calLink').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + gTitle + '&dates=' + gS + '/' + gE + '&details=' + gDet;
+
+  // Show success screen immediately
+  document.getElementById('frm').style.display = 'none';
+  document.getElementById('ok').style.display = 'block';
+  document.getElementById('cd').innerText = code;
+  document.getElementById('od').innerText = 'Reserved for ' + da + ' at ' + selSlot.label;
+
+  // Send email in background (no wait)
+  let fd = new FormData();
+  fd.append('_subject', 'New Booking: ' + code + ' - ' + fn + ' ' + ln + ' (' + da + ' ' + selSlot.label + ')');
+  fd.append('Booking ID', code);
+  fd.append('Name', fn + ' ' + ln);
+  fd.append('Phone', ph);
+  fd.append('Email', em);
+  fd.append('Date & Time', da + ' at ' + selSlot.label);
+  fd.append('Vehicle', mk + ' ' + mo + ' (' + vt + ')');
+  fd.append('Plate', lp);
+  fd.append('Package', pk);
+  fd.append('Addons', ads);
+  fd.append('Total', tot);
+  fetch('https://formsubmit.co/ajax/info@phoenix-auto-details.com', {
+    method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
+  }).catch(function() {});
+}
+</script>
+</body>
+</html>
