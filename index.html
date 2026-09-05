@@ -361,84 +361,105 @@ function renderSlots() {
 // SUBMIT BOOKING
 // ============================================================
 async function submitBooking() {
-  let fn = document.getElementById('fn').value.trim();
-  let ln = document.getElementById('ln').value.trim();
-  let ph = document.getElementById('ph').value.trim();
-  let em = document.getElementById('em').value.trim();
-  let mk = document.getElementById('mk').value.trim();
-  let mo = document.getElementById('mo').value.trim();
-  let lp = document.getElementById('lp').value.trim();
-  let da = normalizeDate(document.getElementById('da').value);
-
-  if (!fn || !ln || !ph || !em || !mk || !mo || !lp || !da) {
-    alert('Please fill in all required fields.');
-    return;
-  }
-  if (!selSlot) {
-    alert('Please select an available time slot.');
-    return;
-  }
-
-  let vt = document.querySelector('input[name="vt"]:checked').value;
-  let pk = document.querySelector('input[name="pkg"]:checked').value;
-  let ads = Array.from(document.querySelectorAll('.ag input[type=checkbox]:checked')).map(function(e) { return e.value; }).join(', ') || 'None';
-  let tot = document.getElementById('tot').innerText;
-  let code = 'PAD-' + Math.floor(100000 + Math.random() * 900000);
-  let need = getTotalDuration() + BUF;
-
   let sbtn = document.getElementById('sb');
-  sbtn.disabled = true;
-  sbtn.innerText = 'Reserving...';
+  try {
+    let fn = document.getElementById('fn').value.trim();
+    let ln = document.getElementById('ln').value.trim();
+    let ph = document.getElementById('ph').value.trim();
+    let em = document.getElementById('em').value.trim();
+    let mk = document.getElementById('mk').value.trim();
+    let mo = document.getElementById('mo').value.trim();
+    let lp = document.getElementById('lp').value.trim();
+    let da = normalizeDate(document.getElementById('da').value);
 
-  let data = {
-    bookingId: code, date: da, timeSlot: selSlot.label,
-    startMins: selSlot.mins, totalMins: need,
-    name: fn + ' ' + ln, phone: ph, email: em,
-    vehicle: mk + ' ' + mo + ' (' + vt + ')', plate: lp,
-    package: pk, addons: ads, totalPrice: tot,
-    createdAt: new Date().toISOString()
-  };
+    if (!fn || !ln || !ph || !em || !mk || !mo || !lp || !da) {
+      alert('Please fill in all required fields (Name, Phone, Email, Vehicle, Plate, Date).');
+      return;
+    }
+    if (!selSlot) {
+      alert('Please select an available time slot from the list.');
+      return;
+    }
 
-  // Save to Firebase
-  let firestore = initFirebase();
-  if (firestore) {
-    try { await firestore.collection('bookings').doc(code).set(data); }
-    catch(e) { console.error('Firestore save error:', e); }
-  } else {
+    let vtRadio = document.querySelector('input[name="vt"]:checked');
+    let vt = vtRadio ? vtRadio.value : 'Standard';
+    let pkRadio = document.querySelector('input[name="pkg"]:checked');
+    let pk = pkRadio ? pkRadio.value : 'Standard Detail';
+    let ads = Array.from(document.querySelectorAll('.ag input[type=checkbox]:checked')).map(function(e) { return e.value; }).join(', ') || 'None';
+    let tot = document.getElementById('tot').innerText;
+    let code = 'PAD-' + Math.floor(100000 + Math.random() * 900000);
+    let need = getTotalDuration() + BUF;
+
+    sbtn.disabled = true;
+    sbtn.innerText = 'Reserving...';
+
+    let data = {
+      bookingId: code, date: da, timeSlot: selSlot.label,
+      startMins: selSlot.mins, totalMins: need,
+      name: fn + ' ' + ln, phone: ph, email: em,
+      vehicle: mk + ' ' + mo + ' (' + vt + ')', plate: lp,
+      package: pk, addons: ads, totalPrice: tot,
+      createdAt: new Date().toISOString()
+    };
+
+    // Build Google Calendar link
+    let gS = da.replace(/-/g, '') + 'T' + String(Math.floor(selSlot.mins / 60)).padStart(2, '0') + String(selSlot.mins % 60).padStart(2, '0') + '00';
+    let endM = selSlot.mins + need;
+    let gE = da.replace(/-/g, '') + 'T' + String(Math.floor(endM / 60)).padStart(2, '0') + String(endM % 60).padStart(2, '0') + '00';
+    let gTitle = encodeURIComponent('Detailing: ' + code + ' - ' + fn + ' ' + ln);
+    let gDet = encodeURIComponent('Booking ID: ' + code + '\nName: ' + fn + ' ' + ln + '\nPhone: ' + ph + '\nVehicle: ' + mk + ' ' + mo + ' (' + vt + ')\nPlate: ' + lp + '\nPackage: ' + pk + '\nAdd-ons: ' + ads + '\nTotal: ' + tot);
+    document.getElementById('calLink').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + gTitle + '&dates=' + gS + '/' + gE + '&details=' + gDet;
+
+    // Show success screen IMMEDIATELY so user never hangs
+    document.getElementById('frm').style.display = 'none';
+    document.getElementById('ok').style.display = 'block';
+    document.getElementById('cd').innerText = code;
+    document.getElementById('od').innerText = 'Reserved for ' + da + ' at ' + selSlot.label;
+
+    // Save locally as immediate backup
     allBookings.push(data);
     localStorage.setItem('pb_all', JSON.stringify(allBookings));
+
+    // Save to Firebase asynchronously
+    let firestore = initFirebase();
+    if (firestore) {
+      firestore.collection('bookings').doc(code).set(data)
+        .then(function() {
+          console.log('✅ Booking successfully stored in Firestore:', code);
+        })
+        .catch(function(e) {
+          console.error('⚠️ Firestore write error (check security rules / permissions):', e);
+        });
+    }
+
+    // Send email notification in background
+    let fd = new FormData();
+    fd.append('_subject', 'New Booking: ' + code + ' - ' + fn + ' ' + ln + ' (' + da + ' ' + selSlot.label + ')');
+    fd.append('Booking ID', code);
+    fd.append('Name', fn + ' ' + ln);
+    fd.append('Phone', ph);
+    fd.append('Email', em);
+    fd.append('Date & Time', da + ' at ' + selSlot.label);
+    fd.append('Vehicle', mk + ' ' + mo + ' (' + vt + ')');
+    fd.append('Plate', lp);
+    fd.append('Package', pk);
+    fd.append('Addons', ads);
+    fd.append('Total', tot);
+
+    fetch('https://formsubmit.co/ajax/info@phoenix-auto-details.com', {
+      method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
+    }).catch(function(err) {
+      console.warn('FormSubmit background notification error:', err);
+    });
+
+  } catch (err) {
+    console.error('Unexpected error during booking submission:', err);
+    alert('An unexpected error occurred: ' + err.message);
+    if (sbtn) {
+      sbtn.disabled = false;
+      sbtn.innerText = '🚗 Confirm Detailing Booking';
+    }
   }
-
-  // Build Google Calendar link
-  let gS = da.replace(/-/g, '') + 'T' + String(Math.floor(selSlot.mins / 60)).padStart(2, '0') + String(selSlot.mins % 60).padStart(2, '0') + '00';
-  let endM = selSlot.mins + need;
-  let gE = da.replace(/-/g, '') + 'T' + String(Math.floor(endM / 60)).padStart(2, '0') + String(endM % 60).padStart(2, '0') + '00';
-  let gTitle = encodeURIComponent('Detailing Booking: ' + code + ' - ' + fn + ' ' + ln);
-  let gDet = encodeURIComponent('Code: ' + code + '\nPhone: ' + ph + '\nVehicle: ' + mk + ' ' + mo + ' (' + vt + ')\nPlate: ' + lp + '\nPackage: ' + pk + '\nAddons: ' + ads + '\nTotal: ' + tot);
-  document.getElementById('calLink').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + gTitle + '&dates=' + gS + '/' + gE + '&details=' + gDet;
-
-  // Show success screen immediately
-  document.getElementById('frm').style.display = 'none';
-  document.getElementById('ok').style.display = 'block';
-  document.getElementById('cd').innerText = code;
-  document.getElementById('od').innerText = 'Reserved for ' + da + ' at ' + selSlot.label;
-
-  // Send email in background (no wait)
-  let fd = new FormData();
-  fd.append('_subject', 'New Booking: ' + code + ' - ' + fn + ' ' + ln + ' (' + da + ' ' + selSlot.label + ')');
-  fd.append('Booking ID', code);
-  fd.append('Name', fn + ' ' + ln);
-  fd.append('Phone', ph);
-  fd.append('Email', em);
-  fd.append('Date & Time', da + ' at ' + selSlot.label);
-  fd.append('Vehicle', mk + ' ' + mo + ' (' + vt + ')');
-  fd.append('Plate', lp);
-  fd.append('Package', pk);
-  fd.append('Addons', ads);
-  fd.append('Total', tot);
-  fetch('https://formsubmit.co/ajax/info@phoenix-auto-details.com', {
-    method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
-  }).catch(function() {});
 }
 </script>
 </body>
