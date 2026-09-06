@@ -44,57 +44,64 @@ body{background:transparent;color:var(--t);font-family:sans-serif;font-size:13px
 .sl{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:10px;}
 .sb{background:var(--in);border:1px solid var(--b);border-radius:6px;padding:10px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:.15s;}
 .sb:hover:not(.dis){border-color:var(--p);color:var(--p);}
-.sb.on{background:var(--p);color:#fff;border-color:var(--p);font-weight:800;}
-.sb.dis{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:var(--r);cursor:not-allowed;text-decoration:line-through;opacity:.65;}
-.tot{background:rgba(240,126,19,.07);border:1px solid var(--p);border-radius:8px;padding:12px;margin-top:16px;text-align:center;}
-.tv{font-size:24px;color:var(--p);font-weight:800;}
-.di{font-size:11px;color:var(--m);margin-top:4px;}
-.btn{width:100%;border:none;border-radius:6px;padding:13px;font-size:14px;font-weight:800;text-transform:uppercase;cursor:pointer;color:#fff;background:var(--p);margin-top:14px;letter-spacing:.5px;}
-.btn:disabled{opacity:.5;cursor:not-allowed;}
-.cal-btn{display:inline-block;background:#4285f4;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:12px;font-weight:700;margin-top:12px;}
-#ok{display:none;text-align:center;padding:24px 12px;}
-#ok h3{color:var(--p);font-size:16px;font-weight:800;text-transform:uppercase;margin-bottom:8px;}
-.code{color:var(--p);font-size:18px;font-weight:800;border:2px dashed var(--p);padding:6px 14px;display:inline-block;margin:10px 0;border-radius:6px;}
+.sb.on{background:rgba(240,126,19,0.2);border-color:var(--p);color:var(--p);}
+.sb.dis{background:rgba(46,46,56,0.3);border-color:transparent;color:#52525b;cursor:not-allowed;text-decoration:line-through;}
+.tot{margin:18px 0;padding:14px;background:rgba(240,126,19,0.06);border:1px solid rgba(240,126,19,0.2);border-radius:8px;text-align:center;}
+.tv{font-size:24px;font-weight:800;color:var(--p);margin-top:4px;}
+.di{font-size:11px;color:var(--m);margin-top:2px;}
+.btn{width:100%;padding:13px;background:var(--p);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;}
+.btn:hover{filter:brightness(1.1);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+#ok{display:none;text-align:center;padding:24px 10px;}
+#ok h3{font-size:18px;margin-bottom:8px;color:#10b981;}
+.code{font-size:22px;font-weight:800;letter-spacing:2px;color:var(--p);margin:14px 0;}
+.cal-btn{display:inline-block;margin-top:14px;padding:9px 16px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="banner"><p>📋 Select your service & live time slot. Bookings block schedule automatically!</p></div>
-  <div class="st" id="sbBar">🟢 Live Schedule Connected</div>
   <div id="frm">
-    <div class="sec">👤 Customer Info</div>
+    <div class="banner"><p>Mobile Detailing Service — We come to you!</p></div>
+    <div class="st" id="sbBar">🟢 Live Availability Connected</div>
+
+    <div class="sec">👤 Contact Information</div>
     <div class="g">
-      <div class="f"><label>First Name *</label><input id="fn" placeholder="John" required></div>
-      <div class="f"><label>Last Name *</label><input id="ln" placeholder="Doe" required></div>
-      <div class="f"><label>Phone *</label><input id="ph" type="tel" placeholder="(000) 000-0000" required></div>
-      <div class="f"><label>Email *</label><input id="em" type="email" placeholder="email@example.com" required></div>
+      <div class="f"><label>First Name *</label><input id="fn" required placeholder="John"></div>
+      <div class="f"><label>Last Name *</label><input id="ln" required placeholder="Doe"></div>
+    </div>
+    <div class="g">
+      <div class="f"><label>Phone *</label><input id="ph" type="tel" required placeholder="(323) 000-0000"></div>
+      <div class="f"><label>Email *</label><input id="em" type="email" required placeholder="john@example.com"></div>
     </div>
 
-    <div class="sec">🚗 Vehicle Info</div>
-    <div class="f"><label>Vehicle Type *</label>
+    <div class="sec">🚗 Vehicle Details</div>
+    <div class="f"><label>Vehicle Type</label>
       <div class="vt">
-        <input type="radio" id="v1" name="vt" value="Sedan" checked><label for="v1">Sedan</label>
-        <input type="radio" id="v2" name="vt" value="Coupe"><label for="v2">Coupe</label>
-        <input type="radio" id="v3" name="vt" value="SUV"><label for="v3">SUV</label>
-        <input type="radio" id="v4" name="vt" value="Pickup"><label for="v4">Pickup</label>
-        <input type="radio" id="v5" name="vt" value="Other"><label for="v5">Other</label>
+        <input type="radio" id="v_sedan" name="vt" value="Sedan" checked><label for="v_sedan">Sedan</label>
+        <input type="radio" id="v_mid" name="vt" value="Midsize SUV"><label for="v_mid">Midsize SUV</label>
+        <input type="radio" id="v_full" name="vt" value="Full SUV / Truck"><label for="v_full">Full SUV / Truck</label>
+        <input type="radio" id="v_van" name="vt" value="Van"><label for="v_van">Van</label>
       </div>
     </div>
     <div class="g">
-      <div class="f"><label>Make *</label><input id="mk" placeholder="Toyota" required></div>
-      <div class="f"><label>Model *</label><input id="mo" placeholder="Camry" required></div>
-      <div class="f"><label>License Plate *</label><input id="lp" placeholder="ABC-1234" required></div>
+      <div class="f"><label>Make *</label><input id="mk" required placeholder="Toyota"></div>
+      <div class="f"><label>Model *</label><input id="mo" required placeholder="Camry"></div>
     </div>
+    <div class="f"><label>License Plate *</label><input id="lp" required placeholder="8XYZ123"></div>
 
-    <div class="sec">🛠️ Select Package</div>
+    <div class="sec">🧼 Select Detailing Package</div>
     <div id="pkgs">
       <div class="pc on" data-mn="40" data-mx="40" data-dur="45">
-        <input type="radio" name="pkg" value="Staff Car Wash ($40)" checked>
-        <div class="pi"><div class="ph"><span>Staff Car Wash</span><span class="pp">$40</span></div><div class="pd">Foam Wash · Wipe Down · Jams · Windows · Wheels · Tire Shine (45 min)</div></div>
+        <input type="radio" name="pkg" value="Basic Wash ($40)" checked>
+        <div class="pi"><div class="ph"><span>Basic Wash</span><span class="pp">$40</span></div><div class="pd">Foam Hand Wash · Wheels & Tires Cleaned · Windows Out (45 min)</div></div>
       </div>
-      <div class="pc" data-mn="60" data-mx="80" data-dur="60">
-        <input type="radio" name="pkg" value="Int/Ext Maintenance ($60-$80)">
-        <div class="pi"><div class="ph"><span>Int & Ext Maintenance</span><span class="pp">$60-$80</span></div><div class="pd">Vacuum · Wipe · Disinfect · Foam Wash · Deep Wheels (1 hr)</div></div>
+      <div class="pc" data-mn="65" data-mx="75" data-dur="60">
+        <input type="radio" name="pkg" value="Exterior Detail ($65-$75)">
+        <div class="pi"><div class="ph"><span>Exterior Detail</span><span class="pp">$65-$75</span></div><div class="pd">Hand Wash · Wheel Barrels · Tire Shine · Spray Wax (1 hr)</div></div>
+      </div>
+      <div class="pc" data-mn="90" data-mx="100" data-dur="75">
+        <input type="radio" name="pkg" value="Interior Detail ($90-$100)">
+        <div class="pi"><div class="ph"><span>Interior Detail</span><span class="pp">$90-$100</span></div><div class="pd">Deep Vacuum · Wipe Down · Windows In/Out · Floor Mats (1.25 hrs)</div></div>
       </div>
       <div class="pc" data-mn="150" data-mx="200" data-dur="120">
         <input type="radio" name="pkg" value="Mini Full Int/Ext ($150-$200)">
@@ -185,17 +192,14 @@ const WS = 540, WE = 1080, BUF = 30; // 9AM to 6PM, 30min buffer
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-  // Set min date to today
   document.getElementById('da').min = new Date().toISOString().split('T')[0];
 
-  // Package click listeners
   document.querySelectorAll('.pc').forEach(function(card) {
     card.addEventListener('click', function() {
       selectPackage(card);
     });
   });
 
-  // Add-on click listeners
   document.querySelectorAll('.ac').forEach(function(card) {
     card.addEventListener('click', function(e) {
       const id = card.getAttribute('data-id');
@@ -206,15 +210,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Date change listener
   document.getElementById('da').addEventListener('change', function() {
     subscribeToDate();
   });
 
-  // Submit button
   document.getElementById('sb').addEventListener('click', submitBooking);
-
-  // Run initial calc
   recalc();
 });
 
@@ -262,7 +262,6 @@ function recalc() {
   if (m > 0) t += m + ' min';
   document.getElementById('di').innerText = 'Estimated Service Time: ' + t + ' (+ 30 min buffer)';
 
-  // Only re-render slots if date is selected
   if (document.getElementById('da').value) renderSlots();
 }
 
