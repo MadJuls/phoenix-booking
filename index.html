@@ -227,34 +227,45 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
 .vt label:hover{color:var(--t);border-color:var(--p);}
 .vt input:checked+label{background:rgba(240,126,19,0.18);border-color:var(--p);color:var(--p);font-weight:700;}
 
-/* SELECCIÓN DE PAQUETES (2 COLUMNAS) */
+/* SELECCIÓN DE PAQUETES (2 COLUMNAS FIJAS INCLUSO EN MÓVIL) */
 .pkgs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-@media(max-width: 600px) {
-  .pkgs-grid {
-    grid-template-columns: 1fr;
-  }
+  gap: 8px;
 }
 .pc{
   background:var(--in);
   border:1px solid var(--b);
   border-radius:10px;
-  padding:12px;
+  padding:10px 10px;
   cursor:pointer;
   display:flex;
-  gap:10px;
+  gap:8px;
   transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 58px;
 }
 .pc:hover{border-color:var(--b-hover);transform:translateY(-1px);}
 .pc.on{border-color:var(--p);background:rgba(240,126,19,0.08);box-shadow:0 4px 15px rgba(240,126,19,0.15);}
-.pc input[type=radio]{width:15px;height:15px;margin-top:2px;accent-color:var(--p);flex-shrink:0;}
-.pi{flex:1;}
-.ph{display:flex;justify-content:space-between;align-items:flex-start;font-weight:700;font-size:12px;gap:6px;}
-.pp{color:var(--p);font-weight:800;white-space:nowrap;}
-.pd{font-size:10px;color:var(--m);margin-top:4px;line-height:1.4;}
+.pc input[type=radio]{width:14px;height:14px;margin-top:2px;accent-color:var(--p);flex-shrink:0;}
+.pi{flex:1;min-width:0;}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;font-weight:700;font-size:11.5px;gap:4px;}
+.ph span:first-child{white-space:normal;line-height:1.2;}
+.pp{color:var(--p);font-weight:800;white-space:nowrap;font-size:11px;}
+.pd{font-size:9.5px;color:var(--m);margin-top:3px;line-height:1.25;}
+
+@media(max-width: 480px) {
+  .wrap { padding: 14px 10px; }
+  .pkgs-grid { gap: 6px; }
+  .pc { padding: 8px 8px; gap: 6px; }
+  .ph { font-size: 11px; }
+  .pp { font-size: 10.5px; }
+  .pd { font-size: 9px; line-height: 1.2; }
+  .ag { gap: 6px; }
+  .ac { padding: 8px 8px; gap: 6px; }
+  .an { font-size: 10px; }
+  .am { font-size: 8.5px; }
+  .apr { font-size: 10px; }
+}
 
 /* ADD-ONS */
 .ag{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
