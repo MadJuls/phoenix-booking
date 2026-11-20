@@ -7,20 +7,44 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-:root{
+/* ============================================================ */
+/* THEMES: DARK (DEFAULT) & LIGHT                               */
+/* ============================================================ */
+:root {
   --p: #f07e13;
   --p-glow: rgba(240, 126, 19, 0.25);
+  --bg-wrap: rgba(18, 18, 22, 0.88);
   --bg-card: rgba(26, 26, 32, 0.75);
   --in: rgba(35, 35, 44, 0.7);
   --t: #f5f5f7;
   --m: #86868b;
   --b: rgba(255, 255, 255, 0.08);
   --b-hover: rgba(240, 126, 19, 0.45);
+  --cal-bg: rgba(20, 20, 24, 0.6);
+  --cal-cell-bg: #222227;
+  --cal-cell-active: #ffffff;
+  --cal-cell-active-text: #121216;
+  --header-bg: rgba(255, 255, 255, 0.03);
   --r: #ef4444;
   --green: #30d158;
 }
 
-/* Ocultar barra de scroll en todos los navegadores */
+body.light-mode {
+  --bg-wrap: rgba(255, 255, 255, 0.92);
+  --bg-card: rgba(245, 245, 247, 0.85);
+  --in: rgba(235, 235, 240, 0.75);
+  --t: #1d1d1f;
+  --m: #6e6e73;
+  --b: rgba(0, 0, 0, 0.08);
+  --b-hover: rgba(240, 126, 19, 0.55);
+  --cal-bg: rgba(245, 245, 247, 0.7);
+  --cal-cell-bg: #e5e5ea;
+  --cal-cell-active: #1d1d1f;
+  --cal-cell-active-text: #ffffff;
+  --header-bg: rgba(0, 0, 0, 0.03);
+}
+
+/* Ocultar barra de scroll para embeber limpio en Carrd */
 html, body {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -30,36 +54,42 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,Helvetica,sans-serif;}
-body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background 0.3s ease, color 0.3s ease;}
 
-/* Contenedor principal Glassmorphism estilo Apple */
+/* Contenedor principal Glassmorphism */
 .wrap{
   width:100%;
-  background:rgba(18, 18, 22, 0.78);
-  border:1px solid rgba(255,255,255,0.09);
+  background:var(--bg-wrap);
+  border:1px solid var(--b);
   border-radius:18px;
   padding:22px;
   backdrop-filter:blur(25px);
   -webkit-backdrop-filter:blur(25px);
-  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  box-shadow:0 12px 40px rgba(0,0,0,0.4);
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Header Apple Style */
+/* Header Apple Style con Switch Sol/Luna */
 .apple-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--header-bg);
+  border: 1px solid var(--b);
   border-radius: 12px;
   padding: 12px 16px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   backdrop-filter: blur(12px);
+  gap: 10px;
 }
 .apple-header-title {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
 }
 .apple-header-title h4 {
   font-size: 13px;
@@ -73,6 +103,32 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   letter-spacing: -0.1px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Theme Toggle Button (Sol / Luna) */
+.theme-toggle-btn {
+  background: var(--in);
+  border: 1px solid var(--b);
+  border-radius: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--t);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.theme-toggle-btn:hover {
+  border-color: var(--p);
+  transform: scale(1.03);
+}
+
 /* Live Badge con punto pulsante */
 .live-pill {
   display: inline-flex;
@@ -84,7 +140,8 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
-  color: #5deb81;
+  color: #30d158;
+  white-space: nowrap;
 }
 .pulse-dot {
   width: 7px;
@@ -100,21 +157,77 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0); }
 }
 
-.sec{font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;margin:20px 0 10px;letter-spacing:.7px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:5px;}
+/* STEP PROGRESS BAR */
+.progress-container {
+  margin-bottom: 18px;
+}
+.progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--b);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 25%;
+  background: linear-gradient(90deg, var(--p), #ffa142);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.step-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--m);
+}
+.step-meta span.active-name {
+  color: var(--t);
+  font-weight: 600;
+}
+
+/* SHEET CARDS STEP WRAPPER */
+.sheet-step {
+  display: none;
+  animation: fadeIn 0.25s ease-out;
+  flex: 1;
+}
+.sheet-step.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sec-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--t);
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+.sec-sub {
+  font-size: 11px;
+  color: var(--m);
+  margin-bottom: 16px;
+}
+
 .g{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:540px){.g{grid-template-columns:1fr;}}
 .f{display:flex;flex-direction:column;margin-bottom:12px;}
 .f label{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--m);margin-bottom:5px;letter-spacing:0.3px;}
 .f input{background:var(--in);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:10px 12px;font-size:13px;outline:none;transition:0.2s;}
-.f input:focus{border-color:var(--p);background:rgba(40,40,50,0.85);box-shadow:0 0 0 3px var(--p-glow);}
+.f input:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--p-glow);}
 
 .vt{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
 .vt input{display:none;}
-.vt label{background:var(--in);border:1px solid var(--b);border-radius:8px;padding:8px 14px;font-size:11px;font-weight:500;cursor:pointer;color:var(--m);transition:0.2s;}
-.vt label:hover{color:var(--t);border-color:rgba(255,255,255,0.2);}
+.vt label{background:var(--in);border:1px solid var(--b);border-radius:8px;padding:9px 14px;font-size:11px;font-weight:500;cursor:pointer;color:var(--m);transition:0.2s;}
+.vt label:hover{color:var(--t);border-color:var(--p);}
 .vt input:checked+label{background:rgba(240,126,19,0.18);border-color:var(--p);color:var(--p);font-weight:700;}
 
-/* SELECCIÓN DE PAQUETES EN 2 COLUMNAS (GRID) */
+/* SELECCIÓN DE PAQUETES (2 COLUMNAS) */
 .pkgs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -134,7 +247,6 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   display:flex;
   gap:10px;
   transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  position:relative;
 }
 .pc:hover{border-color:var(--b-hover);transform:translateY(-1px);}
 .pc.on{border-color:var(--p);background:rgba(240,126,19,0.08);box-shadow:0 4px 15px rgba(240,126,19,0.15);}
@@ -148,7 +260,7 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
 .ag{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 @media(max-width:540px){.ag{grid-template-columns:1fr;}}
 .ac{background:var(--in);border:1px solid var(--b);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:0.18s;}
-.ac:hover{border-color:rgba(255,255,255,0.2);}
+.ac:hover{border-color:var(--b-hover);}
 .ac.on{border-color:var(--p);background:rgba(240,126,19,0.08);}
 .ac input[type=checkbox]{accent-color:var(--p);width:15px;height:15px;flex-shrink:0;}
 .al{flex:1;}
@@ -156,19 +268,116 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
 .am{font-size:9px;color:var(--m);}
 .apr{color:var(--p);font-weight:700;font-size:11px;white-space:nowrap;}
 
+/* ============================================================ */
+/* LIVE CALENDAR (EXACTO A LA REFERENCIA DE IMAGEN)             */
+/* ============================================================ */
+.cal-box {
+  background: var(--cal-bg);
+  border: 1px solid var(--b);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.cal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.cal-nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--t);
+  letter-spacing: -0.3px;
+}
+.cal-nav-arrows {
+  display: flex;
+  gap: 12px;
+}
+.cal-btn-arrow {
+  color: var(--m);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 6px;
+  transition: color 0.15s ease;
+  user-select: none;
+}
+.cal-btn-arrow:hover {
+  color: var(--t);
+}
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--m);
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.cal-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.cal-day {
+  height: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--cal-cell-bg);
+  color: var(--t);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+.cal-day:hover:not(.disabled) {
+  border: 1px solid var(--p);
+  transform: translateY(-1px);
+}
+.cal-day.selected {
+  background: var(--cal-cell-active) !important;
+  color: var(--cal-cell-active-text) !important;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.cal-day.disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+  background: transparent !important;
+}
+.cal-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--p);
+}
+.cal-day.selected.today::after {
+  background: var(--cal-cell-active-text);
+}
+
 /* TIME SLOTS */
 .sl{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px;margin-top:10px;}
 .sb{background:var(--in);border:1px solid var(--b);border-radius:7px;padding:10px 6px;font-size:12px;font-weight:600;color:var(--t);text-align:center;cursor:pointer;transition:0.18s;user-select:none;}
 .sb:hover:not(.dis){border-color:var(--p);color:var(--p);}
 .sb.on{background:rgba(240,126,19,0.25);border-color:var(--p);color:var(--p);box-shadow:0 0 8px rgba(240,126,19,0.3);}
-.sb.dis{background:rgba(46,46,56,0.3);border-color:transparent;color:#52525b;cursor:not-allowed;text-decoration:line-through;}
+.sb.dis{background:rgba(120,120,130,0.15);border-color:transparent;color:var(--m);cursor:not-allowed;text-decoration:line-through;opacity:0.45;}
 
 /* REQUEST CALL SWITCH */
 .req-call-box {
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  margin: 14px 0;
+  padding: 12px 14px;
+  background: var(--in);
+  border: 1px solid var(--b);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -177,7 +386,7 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   transition: 0.2s;
 }
 .req-call-box:hover {
-  border-color: rgba(255,255,255,0.18);
+  border-color: var(--b-hover);
 }
 .req-call-box.on {
   border-color: var(--p);
@@ -207,146 +416,330 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   cursor: pointer;
 }
 
-/* TOTAL */
-.tot{margin:18px 0;padding:16px;background:rgba(240,126,19,0.07);border:1px solid rgba(240,126,19,0.25);border-radius:10px;text-align:center;}
-.tv{font-size:26px;font-weight:800;color:var(--p);margin-top:4px;letter-spacing:-0.5px;}
-.di{font-size:11px;color:var(--m);margin-top:2px;}
+/* TOTAL STICKY FOOTER IN CARD */
+.tot-summary-card {
+  margin: 16px 0;
+  padding: 14px;
+  background: rgba(240,126,19,0.08);
+  border: 1px solid rgba(240,126,19,0.25);
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.tot-summary-card .tot-left div:first-child {
+  font-size: 10px;
+  color: var(--m);
+  letter-spacing: 0.4px;
+}
+.tot-summary-card .tot-left div:last-child {
+  font-size: 11px;
+  color: var(--t);
+  font-weight: 500;
+}
+.tot-summary-card .tv {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--p);
+  letter-spacing: -0.5px;
+}
 
-.btn{width:100%;padding:14px;background:linear-gradient(135deg, #f07e13, #e06d04);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 6px 20px rgba(240,126,19,0.3);}
-.btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
-.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+/* REVIEW SUMMARY ITEM */
+.rev-box {
+  background: var(--in);
+  border: 1px solid var(--b);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.rev-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 6px;
+  color: var(--m);
+}
+.rev-row span:last-child {
+  color: var(--t);
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+}
 
-#ok{display:none;text-align:center;padding:26px 12px;}
-#ok h3{font-size:20px;margin-bottom:8px;color:#30d158;}
-.code{font-size:24px;font-weight:800;letter-spacing:2px;color:var(--p);margin:14px 0;}
-.cal-btn{display:inline-block;margin-top:14px;padding:10px 18px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;transition:0.2s;}
+/* NAVIGATION BUTTONS */
+.nav-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+.btn-back {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  background: var(--in);
+  border: 1px solid var(--b);
+  border-radius: 9px;
+  color: var(--t);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-back:hover {
+  background: var(--b-hover);
+}
+.btn-next {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #f07e13, #e06d04);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(240,126,19,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-next:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#ok{display:none;text-align:center;padding:30px 14px;}
+#ok h3{font-size:22px;margin-bottom:8px;color:#30d158;}
+.code{font-size:26px;font-weight:800;letter-spacing:2px;color:var(--p);margin:16px 0;}
+.cal-btn{display:inline-block;margin-top:14px;padding:12px 20px;background:#2563eb;color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;transition:0.2s;}
 .cal-btn:hover{background:#1d4ed8;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div id="frm">
-    <!-- Header Apple Style -->
+  <div id="frm" style="display:flex; flex-direction:column; flex:1;">
+    <!-- Header Apple Style con Switch Sol/Luna -->
     <div class="apple-header">
       <div class="apple-header-title">
         <h4>Phoenix Automotive Details</h4>
-        <p>Mobile Concierge Detailing · We come directly to you</p>
+        <p>Mobile Concierge Detailing · We come to you</p>
       </div>
-      <div class="live-pill" id="sbBar">
-        <span class="pulse-dot"></span>
-        <span>Live Availability</span>
-      </div>
-    </div>
-
-    <div class="sec">👤 Contact & Service Location</div>
-    <div class="g">
-      <div class="f"><label>First Name *</label><input id="fn" required placeholder="John"></div>
-      <div class="f"><label>Last Name *</label><input id="ln" required placeholder="Doe"></div>
-    </div>
-    <div class="g">
-      <div class="f"><label>Phone *</label><input id="ph" type="tel" required placeholder="(323) 000-0000"></div>
-      <div class="f"><label>Email *</label><input id="em" type="email" required placeholder="john@example.com"></div>
-    </div>
-    <div class="f"><label>Service Location / Full Address (We come to you!) *</label><input id="addr" placeholder="123 Main St, Apt 4B, Los Angeles, CA 90001" required></div>
-
-    <div class="sec">🚗 Vehicle Details</div>
-    <div class="f"><label>Vehicle Type</label>
-      <div class="vt">
-        <input type="radio" id="v_sedan" name="vt" value="Sedan" checked><label for="v_sedan">Sedan</label>
-        <input type="radio" id="v_mid" name="vt" value="Midsize SUV"><label for="v_mid">Midsize SUV</label>
-        <input type="radio" id="v_full" name="vt" value="Full SUV / Truck"><label for="v_full">Full SUV / Truck</label>
-        <input type="radio" id="v_van" name="vt" value="Van"><label for="v_van">Van</label>
-      </div>
-    </div>
-    <div class="g">
-      <div class="f"><label>Make *</label><input id="mk" required placeholder="Toyota"></div>
-      <div class="f"><label>Model *</label><input id="mo" required placeholder="Camry"></div>
-    </div>
-    <div class="f"><label>License Plate *</label><input id="lp" required placeholder="8XYZ123"></div>
-
-    <div class="sec">🧼 Select Detailing Package</div>
-    <!-- 2 COLUMNAS GRID -->
-    <div class="pkgs-grid" id="pkgs">
-      <div class="pc on" data-mn="40" data-mx="40" data-dur="45">
-        <input type="radio" name="pkg" value="Staff Car Wash ($40)" checked>
-        <div class="pi"><div class="ph"><span>Staff Car Wash</span><span class="pp">$40</span></div><div class="pd">Foam Hand Wash · Wheels & Tires · Windows Out (45 min)</div></div>
-      </div>
-      <div class="pc" data-mn="65" data-mx="75" data-dur="60">
-        <input type="radio" name="pkg" value="Exterior Detail ($65-$75)">
-        <div class="pi"><div class="ph"><span>Exterior Detail</span><span class="pp">$65-$75</span></div><div class="pd">Hand Wash · Wheel Barrels · Tire Shine · Spray Wax (1 hr)</div></div>
-      </div>
-      <div class="pc" data-mn="90" data-mx="100" data-dur="75">
-        <input type="radio" name="pkg" value="Interior Detail ($90-$100)">
-        <div class="pi"><div class="ph"><span>Interior Detail</span><span class="pp">$90-$100</span></div><div class="pd">Deep Vacuum · Wipe Down · Windows In/Out · Floor Mats (1.25 hrs)</div></div>
-      </div>
-      <div class="pc" data-mn="150" data-mx="200" data-dur="120">
-        <input type="radio" name="pkg" value="Mini Full Int/Ext ($150-$200)">
-        <div class="pi"><div class="ph"><span>Mini Full Int & Ext</span><span class="pp">$150-$200</span></div><div class="pd">Steam Clean · Iron Removal · Spray Sealant · Full Wash (2 hrs)</div></div>
-      </div>
-      <div class="pc" data-mn="180" data-mx="240" data-dur="120">
-        <input type="radio" name="pkg" value="Interior Refresh ($180-$240)">
-        <div class="pi"><div class="ph"><span>Interior Refresh</span><span class="pp">$180-$240</span></div><div class="pd">Seats & Carpet Shampooed · Leather Clean · Steam (2 hrs)</div></div>
-      </div>
-      <div class="pc" data-mn="200" data-mx="300" data-dur="120">
-        <input type="radio" name="pkg" value="Exterior Restoration ($200-$300)">
-        <div class="pi"><div class="ph"><span>Exterior Restoration</span><span class="pp">$200-$300</span></div><div class="pd">Clay Bar · Paint Correction · Iron · Deep Wheels (2 hrs)</div></div>
-      </div>
-      <div class="pc" data-mn="400" data-mx="500" data-dur="360" style="grid-column: 1 / -1;">
-        <input type="radio" name="pkg" value="Luxury Restoration ($400-$500)">
-        <div class="pi"><div class="ph"><span>Luxury Restoration</span><span class="pp">$400-$500</span></div><div class="pd">Full Correction · 4-6mo Sealant · Engine · Shampoo (6 hrs)</div></div>
-      </div>
-    </div>
-
-    <div class="sec">➕ Add-ons</div>
-    <div class="ag">
-      <div class="ac" data-id="a1"><input type="checkbox" id="a1" data-n="40" data-x="60" data-dur="0" value="Ceramic Sealant ($40-$60)"><div class="al"><div class="an">Ceramic Sealant</div><div class="am">4-6 Months</div></div><div class="apr">$40-$60</div></div>
-      <div class="ac" data-id="a2"><input type="checkbox" id="a2" data-n="800" data-x="1000" data-dur="240" value="Ceramic Coating ($800-$1000)"><div class="al"><div class="an">Ceramic Coating</div><div class="am">+4 Hours</div></div><div class="apr">$800-$1K</div></div>
-      <div class="ac" data-id="a3"><input type="checkbox" id="a3" data-n="30" data-x="30" data-dur="0" value="Wax Application ($30)"><div class="al"><div class="an">Wax Application</div><div class="am">1-2 Months</div></div><div class="apr">$30</div></div>
-      <div class="ac" data-id="a4"><input type="checkbox" id="a4" data-n="40" data-x="50" data-dur="30" value="Pet Hair Removal ($40-$50)"><div class="al"><div class="an">Pet Hair</div><div class="am">+30 Min</div></div><div class="apr">$40-$50</div></div>
-      <div class="ac" data-id="a5"><input type="checkbox" id="a5" data-n="40" data-x="40" data-dur="30" value="Engine Bay ($40)"><div class="al"><div class="an">Engine Bay</div><div class="am">+30 Min</div></div><div class="apr">$40</div></div>
-      <div class="ac" data-id="a6"><input type="checkbox" id="a6" data-n="60" data-x="80" data-dur="30" value="Headlight Restore ($60-$80)"><div class="al"><div class="an">Headlights</div><div class="am">+30 Min</div></div><div class="apr">$60-$80</div></div>
-    </div>
-
-    <!-- REQUEST CALL OPTION -->
-    <div class="req-call-box" id="reqCallBox">
-      <div class="req-call-info">
-        <span class="req-call-icon">📞</span>
-        <div class="req-call-text">
-          <h5>Request a Confirmation Call</h5>
-          <p>Have questions? Miguel will call you before starting the service</p>
+      <div class="header-right">
+        <!-- Botón Sol / Luna -->
+        <div class="theme-toggle-btn" id="themeBtn" title="Switch Theme">
+          <span id="themeIcon">☀️</span>
+        </div>
+        <div class="live-pill" id="sbBar">
+          <span class="pulse-dot"></span>
+          <span>Live Availability</span>
         </div>
       </div>
-      <input type="checkbox" id="cbReqCall">
     </div>
 
-    <div class="sec">📅 Select Date & Live Time Slot</div>
-    <div class="f"><label>Date *</label><input id="da" type="date" required></div>
-    <div class="f">
-      <label>Available Time Slots (Green = Open · Red/Strikethrough = Booked) *</label>
-      <div class="sl" id="sc"><div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date above</div></div>
+    <!-- Barra de progreso -->
+    <div class="progress-container">
+      <div class="progress-track"><div class="progress-fill" id="pFill"></div></div>
+      <div class="step-meta">
+        <span id="stepCounter">Step 1 of 4</span>
+        <span class="active-name" id="stepName">Package & Add-ons</span>
+      </div>
     </div>
-    <div class="tot">
-      <div style="font-size:9px;color:var(--m);letter-spacing:0.5px;">ESTIMATED TOTAL & SERVICE BLOCK</div>
-      <div class="tv" id="tot">$40</div>
-      <div class="di" id="di">Estimated Service Time: 45 min (+ 30 min buffer)</div>
+
+    <!-- ============================================================ -->
+    <!-- STEP 1: SERVICE & ADDONS                                     -->
+    <!-- ============================================================ -->
+    <div class="sheet-step active" id="step1">
+      <div class="sec-title">Select Detailing Service</div>
+      <div class="sec-sub">Choose your primary package and optional enhancements.</div>
+
+      <div class="pkgs-grid" id="pkgs">
+        <div class="pc on" data-mn="40" data-mx="40" data-dur="45">
+          <input type="radio" name="pkg" value="Staff Car Wash ($40)" checked>
+          <div class="pi"><div class="ph"><span>Staff Car Wash</span><span class="pp">$40</span></div><div class="pd">Foam Hand Wash · Wheels & Tires · Windows Out (45 min)</div></div>
+        </div>
+        <div class="pc" data-mn="65" data-mx="75" data-dur="60">
+          <input type="radio" name="pkg" value="Exterior Detail ($65-$75)">
+          <div class="pi"><div class="ph"><span>Exterior Detail</span><span class="pp">$65-$75</span></div><div class="pd">Hand Wash · Wheel Barrels · Tire Shine · Spray Wax (1 hr)</div></div>
+        </div>
+        <div class="pc" data-mn="90" data-mx="100" data-dur="75">
+          <input type="radio" name="pkg" value="Interior Detail ($90-$100)">
+          <div class="pi"><div class="ph"><span>Interior Detail</span><span class="pp">$90-$100</span></div><div class="pd">Deep Vacuum · Wipe Down · Windows In/Out · Floor Mats (1.25 hrs)</div></div>
+        </div>
+        <div class="pc" data-mn="150" data-mx="200" data-dur="120">
+          <input type="radio" name="pkg" value="Mini Full Int/Ext ($150-$200)">
+          <div class="pi"><div class="ph"><span>Mini Full Int & Ext</span><span class="pp">$150-$200</span></div><div class="pd">Steam Clean · Iron Removal · Spray Sealant · Full Wash (2 hrs)</div></div>
+        </div>
+        <div class="pc" data-mn="180" data-mx="240" data-dur="120">
+          <input type="radio" name="pkg" value="Interior Refresh ($180-$240)">
+          <div class="pi"><div class="ph"><span>Interior Refresh</span><span class="pp">$180-$240</span></div><div class="pd">Seats & Carpet Shampooed · Leather Clean · Steam (2 hrs)</div></div>
+        </div>
+        <div class="pc" data-mn="200" data-mx="300" data-dur="120">
+          <input type="radio" name="pkg" value="Exterior Restoration ($200-$300)">
+          <div class="pi"><div class="ph"><span>Exterior Restoration</span><span class="pp">$200-$300</span></div><div class="pd">Clay Bar · Paint Correction · Iron · Deep Wheels (2 hrs)</div></div>
+        </div>
+        <div class="pc" data-mn="400" data-mx="500" data-dur="360" style="grid-column: 1 / -1;">
+          <input type="radio" name="pkg" value="Luxury Restoration ($400-$500)">
+          <div class="pi"><div class="ph"><span>Luxury Restoration</span><span class="pp">$400-$500</span></div><div class="pd">Full Correction · 4-6mo Sealant · Engine · Shampoo (6 hrs)</div></div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--p);text-transform:uppercase;margin:18px 0 10px;letter-spacing:.7px;">Optional Add-ons</div>
+      <div class="ag">
+        <div class="ac" data-id="a1"><input type="checkbox" id="a1" data-n="40" data-x="60" data-dur="0" value="Ceramic Sealant ($40-$60)"><div class="al"><div class="an">Ceramic Sealant</div><div class="am">4-6 Months</div></div><div class="apr">$40-$60</div></div>
+        <div class="ac" data-id="a2"><input type="checkbox" id="a2" data-n="800" data-x="1000" data-dur="240" value="Ceramic Coating ($800-$1000)"><div class="al"><div class="an">Ceramic Coating</div><div class="am">+4 Hours</div></div><div class="apr">$800-$1K</div></div>
+        <div class="ac" data-id="a3"><input type="checkbox" id="a3" data-n="30" data-x="30" data-dur="0" value="Wax Application ($30)"><div class="al"><div class="an">Wax Application</div><div class="am">1-2 Months</div></div><div class="apr">$30</div></div>
+        <div class="ac" data-id="a4"><input type="checkbox" id="a4" data-n="40" data-x="50" data-dur="30" value="Pet Hair Removal ($40-$50)"><div class="al"><div class="an">Pet Hair</div><div class="am">+30 Min</div></div><div class="apr">$40-$50</div></div>
+        <div class="ac" data-id="a5"><input type="checkbox" id="a5" data-n="40" data-x="40" data-dur="30" value="Engine Bay ($40)"><div class="al"><div class="an">Engine Bay</div><div class="am">+30 Min</div></div><div class="apr">$40</div></div>
+        <div class="ac" data-id="a6"><input type="checkbox" id="a6" data-n="60" data-x="80" data-dur="30" value="Headlight Restore ($60-$80)"><div class="al"><div class="an">Headlights</div><div class="am">+30 Min</div></div><div class="apr">$60-$80</div></div>
+      </div>
+
+      <div class="tot-summary-card">
+        <div class="tot-left">
+          <div>ESTIMATED ESTIMATE</div>
+          <div id="di1">Estimated Duration: 45 min</div>
+        </div>
+        <div class="tv" id="tot1">$40</div>
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="btn-next" onclick="nextStep(2)">Continue to Vehicle Details →</button>
+      </div>
     </div>
-    <button class="btn" id="sb">🚗 Confirm Detailing Booking</button>
+
+    <!-- ============================================================ -->
+    <!-- STEP 2: VEHICLE & LOCATION                                   -->
+    <!-- ============================================================ -->
+    <div class="sheet-step" id="step2">
+      <div class="sec-title">Vehicle & Location</div>
+      <div class="sec-sub">Where should Miguel bring the mobile detailing studio?</div>
+
+      <div class="f"><label>Vehicle Type</label>
+        <div class="vt">
+          <input type="radio" id="v_sedan" name="vt" value="Sedan" checked><label for="v_sedan">Sedan</label>
+          <input type="radio" id="v_mid" name="vt" value="Midsize SUV"><label for="v_mid">Midsize SUV</label>
+          <input type="radio" id="v_full" name="vt" value="Full SUV / Truck"><label for="v_full">Full SUV / Truck</label>
+          <input type="radio" id="v_van" name="vt" value="Van"><label for="v_van">Van</label>
+        </div>
+      </div>
+      <div class="g">
+        <div class="f"><label>Vehicle Make *</label><input id="mk" required placeholder="e.g. Porsche / Tesla / Toyota"></div>
+        <div class="f"><label>Vehicle Model *</label><input id="mo" required placeholder="e.g. 911 / Model Y / Camry"></div>
+      </div>
+      <div class="f"><label>License Plate (Optional)</label><input id="lp" placeholder="e.g. 8XYZ123"></div>
+      
+      <div class="f">
+        <label>Service Location / Address (We Come To You) *</label>
+        <input id="addr" placeholder="Street, Apt/Suite, City, ZIP Code" required>
+      </div>
+
+      <!-- REQUEST CALL SWITCH -->
+      <div class="req-call-box" id="reqCallBox">
+        <div class="req-call-info">
+          <span class="req-call-icon">📞</span>
+          <div class="req-call-text">
+            <h5>Request a Confirmation Call</h5>
+            <p>Have questions? Miguel will call you before arriving</p>
+          </div>
+        </div>
+        <input type="checkbox" id="cbReqCall">
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="btn-back" onclick="prevStep(1)">← Back</button>
+        <button type="button" class="btn-next" onclick="validateStep2()">Choose Date & Time →</button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STEP 3: LIVE CALENDAR & TIME SLOTS                           -->
+    <!-- ============================================================ -->
+    <div class="sheet-step" id="step3">
+      <div class="sec-title">Live Availability Calendar</div>
+      <div class="sec-sub">Select your preferred service date and available time slot.</div>
+
+      <!-- CALENDARIO LIVE SUPERIOR (DISEÑO SCREENSHOT) -->
+      <div class="cal-box">
+        <div class="cal-nav">
+          <div class="cal-nav-title" id="calMonthLabel">November 2026</div>
+          <div class="cal-nav-arrows">
+            <span class="cal-btn-arrow" onclick="changeMonth(-1)">‹</span>
+            <span class="cal-btn-arrow" onclick="changeMonth(1)">›</span>
+          </div>
+        </div>
+        <div class="cal-weekdays">
+          <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+        </div>
+        <div class="cal-days-grid" id="calDaysGrid"></div>
+      </div>
+
+      <!-- SELECCIÓN DE HORARIOS -->
+      <div class="f">
+        <label id="slotHeaderLabel">Available Time Slots for Selected Date *</label>
+        <div class="sl" id="sc">
+          <div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date on the calendar above</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="btn-back" onclick="prevStep(2)">← Back</button>
+        <button type="button" class="btn-next" onclick="validateStep3()">Review & Client Info →</button>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STEP 4: CONTACT & REVIEW CONFIRMATION                        -->
+    <!-- ============================================================ -->
+    <div class="sheet-step" id="step4">
+      <div class="sec-title">Contact & Final Confirmation</div>
+      <div class="sec-sub">Review your service summary and confirm your appointment.</div>
+
+      <div class="rev-box">
+        <div class="rev-row"><span>Service Package:</span><span id="revPkg">Staff Car Wash</span></div>
+        <div class="rev-row"><span>Add-ons:</span><span id="revAds">None</span></div>
+        <div class="rev-row"><span>Vehicle:</span><span id="revVeh">Sedan</span></div>
+        <div class="rev-row"><span>Service Address:</span><span id="revAddr">-</span></div>
+        <div class="rev-row"><span>Appointment Date & Time:</span><span id="revWhen">-</span></div>
+        <div class="rev-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--b);"><span style="color:var(--t);font-weight:700;">Total Estimate:</span><span id="revTot" style="color:var(--p);font-size:14px;font-weight:800;">$40</span></div>
+      </div>
+
+      <div class="g">
+        <div class="f"><label>First Name *</label><input id="fn" required placeholder="John"></div>
+        <div class="f"><label>Last Name *</label><input id="ln" required placeholder="Doe"></div>
+      </div>
+      <div class="g">
+        <div class="f"><label>Phone Number (Mobile) *</label><input id="ph" type="tel" required placeholder="(323) 000-0000"></div>
+        <div class="f"><label>Email Address *</label><input id="em" type="email" required placeholder="john@example.com"></div>
+      </div>
+
+      <div class="nav-actions">
+        <button type="button" class="btn-back" onclick="prevStep(3)">← Back</button>
+        <button type="button" class="btn-next" id="sb" onclick="submitBooking()">🚗 Confirm Detailing Booking</button>
+      </div>
+    </div>
   </div>
 
+  <!-- PANTALLA DE ÉXITO -->
   <div id="ok">
     <div style="font-size:48px;margin-bottom:10px;">✅</div>
     <h3>Booking Requested!</h3>
     <p style="font-size:11px;color:var(--m);margin-bottom:4px;">Your service code:</p>
     <div class="code" id="cd">PAD-000000</div>
     <p style="font-size:11px;color:var(--m);margin-top:4px;" id="od">Time slot reserved. Confirmation sent to Miguel!</p>
-    <p style="font-size:11px;color:var(--p);margin-top:4px;display:none;" id="callConfirmedNotice">📞 Confirmation call requested — Miguel will contact you shortly.</p>
+    <p style="font-size:11px;color:var(--p);margin-top:6px;display:none;" id="callConfirmedNotice">📞 Confirmation call requested — Miguel will contact you shortly.</p>
     <div><a id="calLink" href="#" target="_blank" class="cal-btn">📅 Add to Google Calendar</a></div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// FIREBASE CONFIG
+// CONFIGURACIÓN FIREBASE & WEBHOOK
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDofl3f-gNv60UfFUp1IwjhV7sLlANbQbU",
@@ -356,6 +749,8 @@ const firebaseConfig = {
   messagingSenderId: "269778227029",
   appId: "1:269778227029:web:53ca26e98cd9fd0b2469dc"
 };
+
+const GOOGLE_CALENDAR_WEBHOOK_URL = "";
 
 let db = null;
 let unsubscribe = null;
@@ -370,33 +765,31 @@ function initFirebase() {
   return db;
 }
 
-// ============================================================
-// STATE
-// ============================================================
+// Variables del Formulario
 let pMin = 40, pMax = 40, pBaseDur = 45;
+const BUF = 30; // 30 min buffer
+const WS = 9 * 60;  // 9:00 AM (540 min)
+const WE = 18 * 60; // 6:00 PM (1080 min)
+
+let selDate = "";
 let selSlot = null;
-const WS = 540, WE = 1080, BUF = 30; // 9AM to 6PM, 30min buffer
+let currentStep = 1;
 
-// ============================================================
-// GOOGLE APPS SCRIPT WEBHOOK (MIGUEL'S GOOGLE CALENDAR)
-// Pegar aquí la URL cuando la tengas:
-// ============================================================
-const GOOGLE_CALENDAR_WEBHOOK_URL = ""; 
+// Fecha del calendario interactivo
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
 
-// ============================================================
-// INIT
-// ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('da').min = new Date().toISOString().split('T')[0];
+  initFirebase();
+  setupTheme();
+  buildCalendar(calYear, calMonth);
 
-  // Package click
+  // Escuchar paquetes
   document.querySelectorAll('.pc').forEach(function(card) {
-    card.addEventListener('click', function() {
-      selectPackage(card);
-    });
+    card.addEventListener('click', function() { selectPackage(card); });
   });
 
-  // Addon click
+  // Escuchar add-ons
   document.querySelectorAll('.ac').forEach(function(card) {
     card.addEventListener('click', function(e) {
       const id = card.getAttribute('data-id');
@@ -407,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Request call click
+  // Switch llamada
   const reqCallBox = document.getElementById('reqCallBox');
   const cbReqCall = document.getElementById('cbReqCall');
   reqCallBox.addEventListener('click', function(e) {
@@ -415,20 +808,93 @@ document.addEventListener('DOMContentLoaded', function() {
     reqCallBox.classList.toggle('on', cbReqCall.checked);
   });
 
-  // Date change / input
-  const dateInput = document.getElementById('da');
-  dateInput.addEventListener('change', subscribeToDate);
-  dateInput.addEventListener('input', subscribeToDate);
+  // Suscribirse a Firebase para citas
+  listenToBookings();
 
-  // Submit button
-  document.getElementById('sb').addEventListener('click', submitBooking);
-  
-  // Initial run
+  // Seleccionar automáticamente el día de hoy
+  let today = new Date();
+  selectCalendarDate(today.getFullYear(), today.getMonth(), today.getDate());
+
   recalc();
 });
 
 // ============================================================
-// PACKAGE SELECTION
+// THEME SWITCH (LIGHT / DARK)
+// ============================================================
+function setupTheme() {
+  const themeBtn = document.getElementById('themeBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  const saved = localStorage.getItem('pad_theme');
+
+  if (saved === 'light') {
+    document.body.classList.add('light-mode');
+    themeIcon.innerText = '🌙';
+  } else {
+    themeIcon.innerText = '☀️';
+  }
+
+  themeBtn.addEventListener('click', function() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    themeIcon.innerText = isLight ? '🌙' : '☀️';
+    localStorage.setItem('pad_theme', isLight ? 'light' : 'dark');
+  });
+}
+
+// ============================================================
+// NAVEGACIÓN MULTI-STEP / SHEETS (ESTILO YELP)
+// ============================================================
+const stepNames = ["Package & Add-ons", "Vehicle & Location", "Schedule & Slots", "Confirm & Book"];
+
+function goToStep(s) {
+  document.querySelectorAll('.sheet-step').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('step' + s).classList.add('active');
+  currentStep = s;
+  document.getElementById('pFill').style.width = (s * 25) + '%';
+  document.getElementById('stepCounter').innerText = 'Step ' + s + ' of 4';
+  document.getElementById('stepName').innerText = stepNames[s - 1];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep(s) { goToStep(s); }
+function prevStep(s) { goToStep(s); }
+
+function validateStep2() {
+  let mk = document.getElementById('mk').value.trim();
+  let mo = document.getElementById('mo').value.trim();
+  let addr = document.getElementById('addr').value.trim();
+  if (!mk || !mo) { alert('Please enter your vehicle Make and Model.'); return; }
+  if (!addr) { alert('Please provide your Service Address (We come directly to you!).'); return; }
+  goToStep(3);
+}
+
+function validateStep3() {
+  if (!selDate) { alert('Please select a date from the calendar.'); return; }
+  if (!selSlot) { alert('Please choose an available time slot for ' + selDate + '.'); return; }
+  updateReviewSummary();
+  goToStep(4);
+}
+
+function updateReviewSummary() {
+  let pkRadio = document.querySelector('input[name="pkg"]:checked');
+  let pk = pkRadio ? pkRadio.value : 'Staff Car Wash ($40)';
+  let ads = Array.from(document.querySelectorAll('.ag input[type=checkbox]:checked')).map(function(el) { return el.value; }).join(', ') || 'None';
+  let vtRadio = document.querySelector('input[name="vt"]:checked');
+  let vt = vtRadio ? vtRadio.value : 'Sedan';
+  let mk = document.getElementById('mk').value.trim();
+  let mo = document.getElementById('mo').value.trim();
+  let addr = document.getElementById('addr').value.trim();
+
+  document.getElementById('revPkg').innerText = pk;
+  document.getElementById('revAds').innerText = ads;
+  document.getElementById('revVeh').innerText = mk + ' ' + mo + ' (' + vt + ')';
+  document.getElementById('revAddr').innerText = addr;
+  document.getElementById('revWhen').innerText = selDate + ' at ' + (selSlot ? selSlot.label : '');
+  document.getElementById('revTot').innerText = document.getElementById('tot1').innerText;
+}
+
+// ============================================================
+// PAQUETES Y DURACIÓN
 // ============================================================
 function selectPackage(card) {
   document.querySelectorAll('.pc').forEach(function(c) {
@@ -443,9 +909,6 @@ function selectPackage(card) {
   recalc();
 }
 
-// ============================================================
-// DURATION & RECALC
-// ============================================================
 function getTotalDuration() {
   let dur = pBaseDur;
   document.querySelectorAll('.ag input[type=checkbox]:checked').forEach(function(cb) {
@@ -460,77 +923,113 @@ function recalc() {
     mn += parseInt(cb.getAttribute('data-n')) || 0;
     mx += parseInt(cb.getAttribute('data-x')) || 0;
   });
-  document.getElementById('tot').innerText = (mn === mx) ? '$' + mn : '$' + mn + ' - $' + mx;
+  let totStr = (mn === mx) ? '$' + mn : '$' + mn + ' - $' + mx;
+  document.getElementById('tot1').innerText = totStr;
 
   let td = getTotalDuration();
   let h = Math.floor(td / 60), m = td % 60, t = '';
   if (h > 0) t += h + ' hr ';
   if (m > 0) t += m + ' min';
-  document.getElementById('di').innerText = 'Estimated Service Time: ' + t + ' (+ 30 min buffer)';
+  document.getElementById('di1').innerText = 'Estimated Duration: ' + t + ' (+ 30 min buffer)';
 
-  if (document.getElementById('da').value) renderSlots();
+  if (selDate) renderSlots();
 }
 
 // ============================================================
-// TIME HELPERS
+// CALENDARIO LIVE SUPERIOR (DISEÑO SCREENSHOT CON MINIMAL ARROWS)
 // ============================================================
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function buildCalendar(year, month) {
+  document.getElementById('calMonthLabel').innerText = monthNames[month] + ' ' + year;
+  let grid = document.getElementById('calDaysGrid');
+  grid.innerHTML = '';
+
+  let firstDay = new Date(year, month, 1).getDay();
+  let daysInMonth = new Date(year, month + 1, 0).getDate();
+  let today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Espacios vacíos antes del primer día del mes
+  for (let i = 0; i < firstDay; i++) {
+    let empty = document.createElement('div');
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    let cell = document.createElement('div');
+    cell.className = 'cal-day';
+    cell.innerText = d;
+
+    let cellDate = new Date(year, month, d);
+    cellDate.setHours(0,0,0,0);
+
+    let isPast = cellDate < today;
+    if (isPast) {
+      cell.classList.add('disabled');
+    } else {
+      if (cellDate.getTime() === today.getTime()) cell.classList.add('today');
+
+      let isoStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      if (isoStr === selDate) cell.classList.add('selected');
+
+      cell.addEventListener('click', function() {
+        selectCalendarDate(year, month, d);
+      });
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  else if (calMonth > 11) { calMonth = 0; calYear++; }
+  buildCalendar(calYear, calMonth);
+}
+
+function selectCalendarDate(year, month, day) {
+  selDate = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  buildCalendar(calYear, calMonth);
+  document.getElementById('slotHeaderLabel').innerText = 'Available Time Slots for ' + monthNames[month] + ' ' + day + ', ' + year + ' *';
+  renderSlots();
+}
+
+// ============================================================
+// CONEXIÓN A FIRESTORE & ANTI-EMPALME
+// ============================================================
+function listenToBookings() {
+  let firestore = initFirebase();
+  if (!firestore) {
+    allBookings = JSON.parse(localStorage.getItem('pb_all') || '[]');
+    return;
+  }
+  if (unsubscribe) unsubscribe();
+  unsubscribe = firestore.collection('bookings').onSnapshot(function(snap) {
+    allBookings = [];
+    snap.forEach(function(doc) { allBookings.push(doc.data()); });
+    renderSlots();
+  }, function(err) {
+    console.warn('Firestore offline notice:', err);
+    allBookings = JSON.parse(localStorage.getItem('pb_all') || '[]');
+    renderSlots();
+  });
+}
+
 function toTime12(mins) {
   let h = Math.floor(mins / 60), m = mins % 60, ap = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
   return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ap;
 }
 
-function normalizeDate(raw) {
-  if (!raw) return '';
-  let p = raw.split('-');
-  if (p.length === 3 && p[0].length === 4) return raw;
-  let d = new Date(raw);
-  if (isNaN(d.getTime())) return raw;
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-// ============================================================
-// FIREBASE REAL-TIME LISTENER (ANTI-EMPALME)
-// ============================================================
-function subscribeToDate() {
-  let dt = normalizeDate(document.getElementById('da').value);
-  if (!dt) return;
-
-  // Render slots immediately with currently known bookings
-  renderSlots();
-
-  let firestore = initFirebase();
-  if (!firestore) {
-    allBookings = JSON.parse(localStorage.getItem('pb_all') || '[]');
-    renderSlots();
-    return;
-  }
-
-  if (unsubscribe) unsubscribe();
-  
-  unsubscribe = firestore.collection('bookings').onSnapshot(function(snap) {
-    allBookings = [];
-    snap.forEach(function(doc) { allBookings.push(doc.data()); });
-    renderSlots();
-  }, function(err) {
-    console.warn('Firestore onSnapshot notice (offline or permission):', err);
-    allBookings = JSON.parse(localStorage.getItem('pb_all') || '[]');
-    renderSlots();
-  });
-}
-
-// ============================================================
-// RENDER TIME SLOTS (DETECCIÓN Y BLOQUEO AUTOMÁTICO DE EMPALMES)
-// ============================================================
 function renderSlots() {
-  let dt = normalizeDate(document.getElementById('da').value);
   let container = document.getElementById('sc');
-  if (!dt) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date above</div>';
+  if (!selDate) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--m);grid-column:1/-1;">👈 Select a date on the calendar above</div>';
     return;
   }
 
-  let dayBookings = allBookings.filter(function(b) { return normalizeDate(b.date) === dt; });
+  let dayBookings = allBookings.filter(function(b) { return b.date === selDate; });
   let need = getTotalDuration() + BUF;
 
   container.innerHTML = '';
@@ -540,12 +1039,10 @@ function renderSlots() {
     let s = m, e = m + need;
     let blk = (e > WE + BUF);
 
-    // Revisar si choca con alguna reserva existente de ese día
     for (let i = 0; i < dayBookings.length; i++) {
       let b = dayBookings[i];
       let bStart = Number(b.startMins);
       let bEnd = bStart + Number(b.totalMins);
-      // Traslape de rangos de tiempo
       if (s < bEnd && e > bStart) { blk = true; break; }
     }
 
@@ -567,7 +1064,7 @@ function renderSlots() {
 }
 
 // ============================================================
-// SUBMIT BOOKING (CON VALIDACIÓN ANTI-EMPALME)
+// ENVÍO DE RESERVA (FIRESTORE + EMAIL + GOOGLE CALENDAR)
 // ============================================================
 async function submitBooking() {
   let sbtn = document.getElementById('sb');
@@ -579,48 +1076,48 @@ async function submitBooking() {
     let addr = document.getElementById('addr').value.trim();
     let mk = document.getElementById('mk').value.trim();
     let mo = document.getElementById('mo').value.trim();
-    let lp = document.getElementById('lp').value.trim();
-    let da = normalizeDate(document.getElementById('da').value);
+    let lp = document.getElementById('lp').value.trim() || 'N/A';
     let reqCall = document.getElementById('cbReqCall').checked;
 
-    if (!fn || !ln || !ph || !em || !addr || !mk || !mo || !lp || !da) {
-      alert('Please fill in all required fields (Name, Phone, Email, Service Address, Vehicle, Plate, Date).');
+    if (!fn || !ln || !ph || !em) {
+      alert('Please fill in your Contact details (Name, Phone, Email).');
       return;
     }
     if (!selSlot) {
-      alert('Please select an available time slot from the list.');
+      alert('Please go back and select a valid time slot.');
       return;
     }
 
     let need = getTotalDuration() + BUF;
     let s = selSlot.mins, e = selSlot.mins + need;
 
-    // VALIDACIÓN INSTANTÁNEA ANTI-EMPALME
-    let dayBookings = allBookings.filter(function(b) { return normalizeDate(b.date) === da; });
+    // Validación anti-empalme final
+    let dayBookings = allBookings.filter(function(b) { return b.date === selDate; });
     for (let i = 0; i < dayBookings.length; i++) {
       let b = dayBookings[i];
       let bStart = Number(b.startMins);
       let bEnd = bStart + Number(b.totalMins);
       if (s < bEnd && e > bStart) {
-        alert('⚠️ Lo sentimos: este horario acaba de ser ocupado. Por favor selecciona otro horario.');
+        alert('⚠️ Este horario acaba de ser ocupado. Por favor regresa al paso 3 y selecciona otro.');
+        goToStep(3);
         renderSlots();
         return;
       }
     }
 
     let vtRadio = document.querySelector('input[name="vt"]:checked');
-    let vt = vtRadio ? vtRadio.value : 'Standard';
+    let vt = vtRadio ? vtRadio.value : 'Sedan';
     let pkRadio = document.querySelector('input[name="pkg"]:checked');
     let pk = pkRadio ? pkRadio.value : 'Staff Car Wash ($40)';
     let ads = Array.from(document.querySelectorAll('.ag input[type=checkbox]:checked')).map(function(el) { return el.value; }).join(', ') || 'None';
-    let tot = document.getElementById('tot').innerText;
+    let tot = document.getElementById('tot1').innerText;
     let code = 'PAD-' + Math.floor(100000 + Math.random() * 900000);
 
     sbtn.disabled = true;
-    sbtn.innerText = 'Reserving...';
+    sbtn.innerText = 'Securing Booking...';
 
     let data = {
-      bookingId: code, date: da, timeSlot: selSlot.label,
+      bookingId: code, date: selDate, timeSlot: selSlot.label,
       startMins: selSlot.mins, totalMins: need,
       name: fn + ' ' + ln, phone: ph, email: em,
       address: addr, requestCall: reqCall ? 'YES' : 'NO',
@@ -629,39 +1126,34 @@ async function submitBooking() {
       createdAt: new Date().toISOString()
     };
 
-    // Google Calendar link
-    let gS = da.replace(/-/g, '') + 'T' + String(Math.floor(selSlot.mins / 60)).padStart(2, '0') + String(selSlot.mins % 60).padStart(2, '0') + '00';
+    // Google Calendar 1-Click link
+    let gS = selDate.replace(/-/g, '') + 'T' + String(Math.floor(selSlot.mins / 60)).padStart(2, '0') + String(selSlot.mins % 60).padStart(2, '0') + '00';
     let endM = selSlot.mins + need;
-    let gE = da.replace(/-/g, '') + 'T' + String(Math.floor(endM / 60)).padStart(2, '0') + String(endM % 60).padStart(2, '0') + '00';
+    let gE = selDate.replace(/-/g, '') + 'T' + String(Math.floor(endM / 60)).padStart(2, '0') + String(endM % 60).padStart(2, '0') + '00';
     let gTitle = encodeURIComponent('Detailing: ' + code + ' - ' + fn + ' ' + ln + (reqCall ? ' [CALL REQ]' : ''));
     let gLoc = encodeURIComponent(addr);
-    let gDet = encodeURIComponent('Booking ID: ' + code + '\nName: ' + fn + ' ' + ln + '\nPhone: ' + ph + '\nAddress: ' + addr + '\nRequest Call: ' + (reqCall ? 'YES' : 'NO') + '\nVehicle: ' + mk + ' ' + mo + ' (' + vt + ')\nPlate: ' + lp + '\nPackage: ' + pk + '\nAdd-ons: ' + ads + '\nTotal: ' + tot);
+    let gDet = encodeURIComponent('Booking ID: ' + code + '\nCustomer: ' + fn + ' ' + ln + '\nPhone: ' + ph + '\nAddress: ' + addr + '\nRequest Call: ' + (reqCall ? 'YES' : 'NO') + '\nVehicle: ' + mk + ' ' + mo + ' (' + vt + ')\nPackage: ' + pk + '\nTotal: ' + tot);
     document.getElementById('calLink').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + gTitle + '&location=' + gLoc + '&dates=' + gS + '/' + gE + '&details=' + gDet;
 
-    // Cambiar inmediatamente a pantalla de confirmación
+    // Cambiar a pantalla de confirmación
     document.getElementById('frm').style.display = 'none';
     document.getElementById('ok').style.display = 'block';
     document.getElementById('cd').innerText = code;
-    document.getElementById('od').innerText = 'Reserved for ' + da + ' at ' + selSlot.label;
+    document.getElementById('od').innerText = 'Reserved for ' + selDate + ' at ' + selSlot.label;
     if (reqCall) document.getElementById('callConfirmedNotice').style.display = 'block';
-
-    // Respaldo local
-    allBookings.push(data);
-    localStorage.setItem('pb_all', JSON.stringify(allBookings));
 
     // Guardar en Firestore
     let firestore = initFirebase();
     if (firestore) {
       firestore.collection('bookings').doc(code).set(data)
-        .then(function() { console.log('✅ Booking stored in Firestore:', code); })
+        .then(function() { console.log('✅ Firestore saved:', code); })
         .catch(function(e) { console.error('Firestore save error:', e); });
     }
 
-    // Google Apps Script Webhook (Google Calendar directo)
+    // Google Apps Script Webhook (si está configurado)
     if (GOOGLE_CALENDAR_WEBHOOK_URL) {
       fetch(GOOGLE_CALENDAR_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
+        method: 'POST', mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }).catch(function(e) { console.warn('Calendar webhook error:', e); });
@@ -669,14 +1161,14 @@ async function submitBooking() {
 
     // Email notification
     let fd = new FormData();
-    fd.append('_subject', (reqCall ? '📞 [CALL REQ] ' : '') + 'New Booking: ' + code + ' - ' + fn + ' ' + ln + ' (' + da + ' ' + selSlot.label + ')');
+    fd.append('_subject', (reqCall ? '📞 [CALL REQ] ' : '') + 'New Booking: ' + code + ' - ' + fn + ' ' + ln + ' (' + selDate + ' ' + selSlot.label + ')');
     fd.append('Booking ID', code);
     fd.append('Request Call', reqCall ? 'YES - Please call the client' : 'NO');
     fd.append('Customer Name', fn + ' ' + ln);
     fd.append('Phone', ph);
     fd.append('Email', em);
     fd.append('Service Location / Address', addr);
-    fd.append('Date & Time', da + ' at ' + selSlot.label);
+    fd.append('Date & Time', selDate + ' at ' + selSlot.label);
     fd.append('Vehicle', mk + ' ' + mo + ' (' + vt + ')');
     fd.append('Plate', lp);
     fd.append('Package', pk);
@@ -686,10 +1178,10 @@ async function submitBooking() {
     fetch('https://formsubmit.co/ajax/info@phoenix-auto-details.com', {
       method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
     }).catch(function(err) {
-      console.warn('FormSubmit notification error:', err);
+      console.warn('FormSubmit error:', err);
     });
 
-  } catch (err) {
+  } catch(err) {
     console.error('Submission error:', err);
     alert('An unexpected error occurred: ' + err.message);
     if (sbtn) {
