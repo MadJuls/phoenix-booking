@@ -383,6 +383,45 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
 .sb.on{background:rgba(240,126,19,0.25);border-color:var(--p);color:var(--p);box-shadow:0 0 8px rgba(240,126,19,0.3);}
 .sb.dis{background:rgba(120,120,130,0.15);border-color:transparent;color:var(--m);cursor:not-allowed;text-decoration:line-through;opacity:0.45;}
 
+/* MINI MAPA Y BOTÓN GPS */
+.gps-btn {
+  background: rgba(240,126,19,0.12);
+  border: 1px solid rgba(240,126,19,0.3);
+  color: var(--p);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gps-btn:hover {
+  background: var(--p);
+  color: #fff;
+}
+.mini-map-box {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--b);
+  margin-top: 4px;
+  margin-bottom: 12px;
+  background: var(--in);
+}
+.mini-map-box iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  filter: contrast(1.05);
+}
+body:not(.light-mode) .mini-map-box iframe {
+  filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 /* REQUEST CALL SWITCH */
 .req-call-box {
   margin: 14px 0;
@@ -646,8 +685,19 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
       <div class="f"><label>License Plate (Optional)</label><input id="lp" placeholder="e.g. 8XYZ123"></div>
       
       <div class="f">
-        <label>Service Location / Address (We Come To You) *</label>
-        <input id="addr" placeholder="Street, Apt/Suite, City, ZIP Code" required>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <label style="margin-bottom:0;">Service Location / Address (We Come To You) *</label>
+          <button type="button" id="btnGps" class="gps-btn" onclick="detectUserLocation()">
+            <span>📍 Use My Location</span>
+          </button>
+        </div>
+        <input id="addr" placeholder="Street, Apt/Suite, City, ZIP Code" required oninput="debounceUpdateMap()">
+        <div id="gpsStatus" style="font-size:10px;color:var(--m);margin-top:3px;display:none;"></div>
+      </div>
+
+      <!-- MINI MAPA INTERACTIVO -->
+      <div id="mapWrapper" class="mini-map-box">
+        <iframe id="mapFrame" src="https://maps.google.com/maps?q=Los+Angeles+CA&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
       </div>
 
       <!-- REQUEST CALL SWITCH -->
@@ -853,8 +903,83 @@ function setupTheme() {
 }
 
 // ============================================================
-// NAVEGACIÓN MULTI-STEP / SHEETS (ESTILO YELP)
+// GEOLOCATION & MINI MAPA (OPCIÓN B)
 // ============================================================
+let mapTimer = null;
+
+function debounceUpdateMap() {
+  clearTimeout(mapTimer);
+  mapTimer = setTimeout(function() {
+    let raw = document.getElementById('addr').value.trim();
+    if (!raw) return;
+    let query = encodeURIComponent(raw);
+    document.getElementById('mapFrame').src = 'https://maps.google.com/maps?q=' + query + '&t=&z=15&ie=UTF8&iwloc=&output=embed';
+  }, 750);
+}
+
+function detectUserLocation() {
+  const btn = document.getElementById('btnGps');
+  const status = document.getElementById('gpsStatus');
+
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳ Locating...</span>';
+  status.style.display = 'block';
+  status.innerText = 'Detecting current GPS location...';
+
+  navigator.geolocation.getCurrentPosition(
+    async function(pos) {
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      status.innerText = 'Resolving address from coordinates...';
+      document.getElementById('mapFrame').src = 'https://maps.google.com/maps?q=' + lat + ',' + lon + '&t=&z=16&ie=UTF8&iwloc=&output=embed';
+
+      try {
+        // Reverse geocoding gratis con OpenStreetMap / Nominatim
+        let res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);
+        let data = await res.json();
+        if (data && data.display_name) {
+          // Extraer calle, ciudad y código postal de forma concisa
+          let addrObj = data.address || {};
+          let road = addrObj.road || addrObj.street || '';
+          let house = addrObj.house_number || '';
+          let city = addrObj.city || addrObj.town || addrObj.suburb || '';
+          let state = addrObj.state || 'CA';
+          let zip = addrObj.postcode || '';
+
+          let formatted = '';
+          if (house || road) formatted = (house + ' ' + road).trim() + ', ';
+          formatted += city ? city + ', ' + state + ' ' + zip : data.display_name;
+
+          document.getElementById('addr').value = formatted;
+          status.innerText = '📍 Location pinned: ' + formatted;
+        } else {
+          document.getElementById('addr').value = lat.toFixed(5) + ', ' + lon.toFixed(5);
+          status.innerText = '📍 Coordinates pinned (' + lat.toFixed(4) + ', ' + lon.toFixed(4) + ')';
+        }
+      } catch(e) {
+        document.getElementById('addr').value = lat.toFixed(5) + ', ' + lon.toFixed(5);
+        status.innerText = '📍 Coordinates pinned on map.';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<span>✓ Located</span>';
+      setTimeout(function() { btn.innerHTML = '<span>📍 Use My Location</span>'; }, 3000);
+    },
+    function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>📍 Use My Location</span>';
+      status.innerText = '⚠️ Could not access location. Please enter address manually.';
+      console.warn('Geolocation error:', err);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
 const stepNames = ["Package & Add-ons", "Vehicle & Location", "Schedule & Slots", "Confirm & Book"];
 
 function goToStep(s) {
