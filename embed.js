@@ -10,8 +10,8 @@
       var iframe = document.createElement('iframe');
       iframe.src = 'https://madjuls.github.io/phoenix-booking/';
       iframe.style.width = '100%';
-      iframe.style.minHeight = isMobile ? '860px' : '620px';
-      iframe.style.height = isMobile ? '860px' : '620px';
+      iframe.style.minHeight = isMobile ? '860px' : '760px';
+      iframe.style.height = isMobile ? '860px' : '760px';
       iframe.style.border = 'none';
       iframe.style.overflow = 'hidden';
       iframe.style.display = 'block';
