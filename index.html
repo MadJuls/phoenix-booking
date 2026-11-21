@@ -389,8 +389,8 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
   border: 1px solid rgba(240,126,19,0.3);
   color: var(--p);
   border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 10px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -404,19 +404,20 @@ body{background:transparent;color:var(--t);font-size:13px;line-height:1.5;-webki
 }
 .mini-map-box {
   width: 100%;
-  height: 140px;
+  height: 160px;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--b);
-  margin-top: 4px;
+  margin-top: 6px;
   margin-bottom: 12px;
   background: var(--in);
+  position: relative;
 }
 .mini-map-box iframe {
   width: 100%;
   height: 100%;
   border: none;
-  filter: contrast(1.05);
+  display: block;
 }
 body:not(.light-mode) .mini-map-box iframe {
   filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
@@ -922,7 +923,8 @@ function detectUserLocation() {
   const status = document.getElementById('gpsStatus');
 
   if (!navigator.geolocation) {
-    alert('Geolocation is not supported by your browser.');
+    status.style.display = 'block';
+    status.innerText = '⚠️ Geolocation is not supported by your browser.';
     return;
   }
 
@@ -930,6 +932,36 @@ function detectUserLocation() {
   btn.innerHTML = '<span>⏳ Locating...</span>';
   status.style.display = 'block';
   status.innerText = 'Detecting current GPS location...';
+
+  // Fallback con IP si el GPS falla o está bloqueado por permisos de iframe
+  function fallbackIpLocation(reason) {
+    status.innerText = 'GPS restricted in embed. Pinning approximate area via IP...';
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.latitude && data.longitude) {
+          let lat = data.latitude;
+          let lon = data.longitude;
+          let city = data.city || '';
+          let region = data.region_code || data.region || '';
+          let postal = data.postal || '';
+          let approx = (city ? city + ', ' : '') + region + (postal ? ' ' + postal : '');
+          
+          document.getElementById('addr').value = approx;
+          document.getElementById('mapFrame').src = 'https://maps.google.com/maps?q=' + lat + ',' + lon + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
+          status.innerText = '📍 Area detected: ' + approx + ' (Please add your street & number)';
+        } else {
+          status.innerText = '⚠️ ' + reason;
+        }
+      })
+      .catch(() => {
+        status.innerText = '⚠️ ' + reason;
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>📍 Use My Location</span>';
+      });
+  }
 
   navigator.geolocation.getCurrentPosition(
     async function(pos) {
@@ -940,11 +972,9 @@ function detectUserLocation() {
       document.getElementById('mapFrame').src = 'https://maps.google.com/maps?q=' + lat + ',' + lon + '&t=&z=16&ie=UTF8&iwloc=&output=embed';
 
       try {
-        // Reverse geocoding gratis con OpenStreetMap / Nominatim
         let res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon);
         let data = await res.json();
         if (data && data.display_name) {
-          // Extraer calle, ciudad y código postal de forma concisa
           let addrObj = data.address || {};
           let road = addrObj.road || addrObj.street || '';
           let house = addrObj.house_number || '';
@@ -972,15 +1002,34 @@ function detectUserLocation() {
       setTimeout(function() { btn.innerHTML = '<span>📍 Use My Location</span>'; }, 3000);
     },
     function(err) {
-      btn.disabled = false;
-      btn.innerHTML = '<span>📍 Use My Location</span>';
-      status.innerText = '⚠️ Could not access location. Please enter address manually.';
       console.warn('Geolocation error:', err);
+      let msg = 'Could not access GPS. Please type address manually.';
+      if (err.code === 1) msg = 'Location permission was denied or restricted.';
+      fallbackIpLocation(msg);
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
   );
 }
 const stepNames = ["Package & Add-ons", "Vehicle & Location", "Schedule & Slots", "Confirm & Book"];
+
+// ============================================================
+// AUTO-RESIZE RESIZER PARA CARRD (POSTMESSAGE)
+// ============================================================
+function sendHeightToCarrd() {
+  try {
+    let wrap = document.querySelector('.wrap');
+    let h = wrap ? wrap.scrollHeight + 30 : document.body.scrollHeight + 30;
+    window.parent.postMessage({ type: 'carrd-resize', height: h }, '*');
+    window.parent.postMessage({ frameHeight: h }, '*');
+  } catch(e) {}
+}
+
+window.addEventListener('load', function() {
+  sendHeightToCarrd();
+  setTimeout(sendHeightToCarrd, 300);
+  setTimeout(sendHeightToCarrd, 1000);
+});
+window.addEventListener('resize', sendHeightToCarrd);
 
 function goToStep(s) {
   document.querySelectorAll('.sheet-step').forEach(function(el) { el.classList.remove('active'); });
@@ -990,6 +1039,8 @@ function goToStep(s) {
   document.getElementById('stepCounter').innerText = 'Step ' + s + ' of 4';
   document.getElementById('stepName').innerText = stepNames[s - 1];
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(sendHeightToCarrd, 50);
+  setTimeout(sendHeightToCarrd, 350);
 }
 
 function nextStep(s) { goToStep(s); }
