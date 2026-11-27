@@ -615,13 +615,9 @@ body:not(.light-mode) .mini-map-box iframe {
           <input type="radio" name="pkg" value="Staff Car Wash ($40)" checked>
           <div class="pi"><div class="ph"><span>Staff Car Wash</span><span class="pp">$40</span></div><div class="pd">Foam Hand Wash · Wheels & Tires · Windows Out (45 min)</div></div>
         </div>
-        <div class="pc" data-mn="65" data-mx="75" data-dur="60">
-          <input type="radio" name="pkg" value="Exterior Detail ($65-$75)">
-          <div class="pi"><div class="ph"><span>Exterior Detail</span><span class="pp">$65-$75</span></div><div class="pd">Hand Wash · Wheel Barrels · Tire Shine · Spray Wax (1 hr)</div></div>
-        </div>
-        <div class="pc" data-mn="90" data-mx="100" data-dur="75">
-          <input type="radio" name="pkg" value="Interior Detail ($90-$100)">
-          <div class="pi"><div class="ph"><span>Interior Detail</span><span class="pp">$90-$100</span></div><div class="pd">Deep Vacuum · Wipe Down · Windows In/Out · Floor Mats (1.25 hrs)</div></div>
+        <div class="pc" data-mn="65" data-mx="80" data-dur="75">
+          <input type="radio" name="pkg" value="Maintenance Detail - Int &amp; Ext ($65-$80)">
+          <div class="pi"><div class="ph"><span>Maintenance Detail</span><span class="pp">$65-$80</span></div><div class="pd">Hand Wash · Wheel Barrels · Tire Shine · Deep Vacuum · Wipe Down · Windows In/Out (1.25 hrs)</div></div>
         </div>
         <div class="pc" data-mn="150" data-mx="200" data-dur="120">
           <input type="radio" name="pkg" value="Mini Full Int/Ext ($150-$200)">
@@ -778,6 +774,16 @@ body:not(.light-mode) .mini-map-box iframe {
       <div class="g">
         <div class="f"><label>Phone Number (Mobile) *</label><input id="ph" type="tel" required placeholder="(323) 000-0000"></div>
         <div class="f"><label>Email Address *</label><input id="em" type="email" required placeholder="john@example.com"></div>
+      </div>
+
+      <!-- A2P 10DLC COMPLIANT SMS CONSENT DISCLOSURE -->
+      <div style="margin: 14px 0 10px; padding: 12px; background: rgba(0,0,0,0.03); border: 1px solid var(--b); border-radius: 8px; font-size: 11px; line-height: 1.45; color: var(--m);">
+        <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-weight: 400; color: var(--t);">
+          <input type="checkbox" id="smsConsentCb" checked style="margin-top: 2px; accent-color: var(--p);">
+          <span>
+            I agree to receive transactional text messages (appointment confirmations, updates, and reminders) from <strong>Phoenix Auto Details LLC</strong> at the mobile number provided above. Message and data rates may apply. Message frequency varies. Text <strong>HELP</strong> for assistance or <strong>STOP</strong> to cancel at any time. View our <a href="https://madjuls.github.io/phoenix-booking/privacy.html" target="_blank" style="color:var(--p);text-decoration:underline;">Privacy Policy</a> and <a href="https://madjuls.github.io/phoenix-booking/terms.html" target="_blank" style="color:var(--p);text-decoration:underline;">Terms & Conditions</a>.
+          </span>
+        </label>
       </div>
 
       <div class="nav-actions">
